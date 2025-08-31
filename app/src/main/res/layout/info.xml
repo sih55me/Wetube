@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:fillViewport="false"
+    android:layout_height="match_parent">
+    <app.wetube.widget.DialogContextMenuLayout
+        android:layout_width="match_parent"
+        android:layout_marginLeft="@dimen/marginContent"
+        android:layout_marginRight="@dimen/marginContent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:id="@+id/con"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+
+
+            <QuickContactBadge
+                android:id="@+id/icon"
+                android:layout_width="130dp"
+                android:layout_height="130dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp" />
+
+            <TextView
+                android:id="@+id/who"
+                android:textSize="20sp"
+                style="?android:titleTextAppearance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textIsSelectable="true"
+                android:backgroundTint="#3ECDCDCD"
+                android:gravity="center"
+                android:padding="10dp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/info"
+                style="?android:subtitleTextAppearance"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="10dp"
+                android:padding="10dp"
+                android:text=""
+                android:textIsSelectable="true"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+    </app.wetube.widget.DialogContextMenuLayout>
+
+
+
+</ScrollView>

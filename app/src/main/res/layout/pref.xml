@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:descendantFocusability="blocksDescendants"
+    android:clickable="false"
+    android:focusable="false">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:id="@+id/item"
+        android:gravity="center"
+        android:clickable="false"
+        android:focusable="false"
+        android:duplicateParentState="true"
+        android:layout_height="48dp">
+        <ImageView
+            android:id="@android:id/icon"
+            android:layout_width="24dp"
+            android:clickable="false"
+            android:focusable="false"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:layout_marginStart="16dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:orientation="vertical"
+            android:layout_marginLeft="65dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@android:id/title"
+                style="?android:textAppearanceMedium"
+                android:layout_width="match_parent"
+                android:text="111"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:gravity="center_vertical"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@android:id/summary"
+                style="?android:textAppearanceSmall"
+                android:text="22"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:gravity="center_vertical"
+                android:maxLines="1" />
+        </LinearLayout>
+
+
+
+
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:id="@android:id/widget_frame"
+            android:layout_gravity="end|center_vertical"
+            android:layout_height="wrap_content"/>
+    </FrameLayout>
+
+
+
+</LinearLayout>

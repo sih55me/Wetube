@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+    <header
+        android:fragment="app.wetube.page.SettingsPage"
+        android:title="@string/general" />
+    <header
+        android:fragment="app.wetube.set.PasswordSet"
+        android:summary="Use to save and change the behaviour"
+        android:title="@string/title_activity_pass"/>
+    <header
+        android:fragment="app.wetube.page.VideoSettings"
+        android:summary="Use to customize behaviour"
+        android:title="Video"/>
+    <header
+        android:title="Feedback"
+        android:fragment="app.wetube.Feedback"/>
+    <header
+        android:fragment="app.wetube.page.Bout"
+        android:title="@string/about"/>
+
+</preference-headers>

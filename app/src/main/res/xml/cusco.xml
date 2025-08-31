@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:title="Custom color (Testing)"
+    android:singleLineTitle="true"
+    android:icon="@drawable/appe">
+    <CheckBoxPreference
+        android:title="Enable this function"
+        android:defaultValue="false"
+        android:key="enco"/>
+
+
+    <PreferenceCategory android:title="Color"
+        android:dependency="enco">
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:title="Title Background Color"
+            android:key="tbc"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:title="Status Bar Background Color"
+            android:key="sbc"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:title="Navigation Bar Background Color"
+            android:key="nbc"/>
+        <yuku.ambilwarna.widget.AmbilWarnaPreference
+            android:title="Window Background Color"
+            android:key="wbc"/>
+    </PreferenceCategory>
+    <Preference
+        android:icon="@drawable/info"
+        android:summary="After change the color, you need to restart the app"/>
+
+    <Preference
+        android:icon="@drawable/info"
+        android:summary="Note : this may not apply to all page"/>
+
+
+</android.preference.PreferenceScreen>

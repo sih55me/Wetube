@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+
+    <PreferenceCategory android:title="@android:string/search_go">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:icon="?android:attr/actionModeWebSearchDrawable"
+            android:key="ss"
+            android:title="Strict SafeSearch" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:icon="@drawable/playlist_remove"
+            android:key="clear_cache"
+            android:title="@string/delete_result_if_invisible" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:icon="@drawable/playlist_add"
+            android:key="auto_add"
+            android:summary="@string/auto_add"
+            android:title="Auto Add" />
+
+        <EditTextPreference
+            android:dialogMessage="Hide video from blacklist channel.\nuse (,) to separate channel.\ninput : channel id"
+            android:icon="@drawable/block"
+            android:key="bc"
+            android:summary="Hide video from blacklist channel"
+            android:title="@string/bc" />
+
+        <Preference
+            android:icon="@drawable/delete"
+            android:key="delhis"
+            android:title="@string/del_sh" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/apr">
+
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:icon="@drawable/appe"
+            android:key="forceWeIcon"
+            android:summary="Force using Wetube icon in every theme"
+            android:title="Force using Wetube Icon" />
+
+
+
+
+
+
+        <ListPreference
+            android:defaultValue="w"
+            android:entries="@array/themeType"
+            android:entryValues="@array/themeTypeVal"
+            android:icon="@drawable/theme"
+            android:key="theme"
+            android:title="@string/theme" />
+
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:icon="@drawable/tab"
+            android:key="tabmod"
+            android:title="Tab Mode" />
+
+
+
+
+
+    <Preference
+        android:title="Color"
+        android:icon="@drawable/color_fill"
+        android:fragment="app.wetube.CustomColorSettings"/>
+        <Preference
+            android:title="FullScreen"
+            android:icon="@drawable/fullscreen"
+            android:fragment="app.wetube.page.CCP"/>
+
+    </PreferenceCategory>
+
+
+
+
+    <PreferenceCategory
+        android:title="@string/storage">
+        <Preference
+            android:title="@string/tovid"
+            android:summary="0"
+            android:icon="@drawable/folder_open"
+            android:key="total"/>
+    </PreferenceCategory>
+
+
+
+
+    <PreferenceCategory
+        android:title="@string/adv">
+
+        <CheckBoxPreference
+            android:title="Make available in lock screen"
+            android:summaryOff="You need to unlock your phone to access the app"
+            android:summaryOn="You can access the app without unlock your phone"
+            android:icon="@drawable/lock_open"
+            android:key="bylock"/>
+
+
+        <Preference
+            android:title="Re-setup"
+            android:icon="@drawable/play">
+            <intent
+                android:targetClass="app.wetube.secret.Intro"
+                android:targetPackage="app.wetube"/>
+        </Preference>
+        <Preference
+            android:title="Restart app"
+            android:icon="@drawable/replay"
+            android:key="res" />
+        <Preference
+            android:title="Reset app"
+            android:icon="@drawable/delete"
+            android:key="rese" />
+
+    </PreferenceCategory>
+
+
+
+
+
+
+
+
+</PreferenceScreen>

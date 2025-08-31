@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:icon="@drawable/fullscreen"
+        android:key="f"
+        android:title="Fullscreen in Homepage">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:title="Fullscreen in Homepage"
+            android:icon="@drawable/fullscreen"
+            android:key="main_fullscreen"
+            android:summary="Hide NavigationBar and StatusBar(not all)" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:dependency="main_fullscreen"
+            android:icon="@drawable/fullscreen"
+            android:key="main_fullscreen_notch"
+            android:title="Don't care about notch"
+            android:summary="Destroy notch barrier (the black one)" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:dependency="main_fullscreen_notch"
+            android:icon="@drawable/fullscreen"
+            android:key="main_fullscreen_bleft"
+            android:title="With Left Border" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:dependency="main_fullscreen_notch"
+            android:icon="@drawable/fullscreen"
+            android:key="main_fullscreen_bright"
+            android:title="With Right Border" />
+    </PreferenceCategory>
+</PreferenceScreen>

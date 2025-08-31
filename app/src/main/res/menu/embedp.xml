@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/speedMenu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/speed"
+        android:title="@string/speed" />
+    <item
+        android:title="Loop"
+        android:id="@+id/loop"
+        android:icon="@drawable/loop"
+        android:checkable="true"
+        />
+    <item
+        android:id="@+id/shorset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/settings"
+        android:title="@string/set" />
+</menu>

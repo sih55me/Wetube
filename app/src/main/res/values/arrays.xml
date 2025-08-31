@@ -1,0 +1,36 @@
+<resources>
+    <!-- Reply Preference -->
+    <string-array name="reply_entries">
+        <item>Reply</item>
+        <item>Reply to all</item>
+    </string-array>
+
+    <string-array name="reply_values">
+        <item>reply</item>
+        <item>reply_all</item>
+    </string-array>
+    <string-array name="themeType">
+        <item>Undefined</item>
+        <item>Wetube (Light)</item>
+        <item>Wetube (Dark)</item>
+        <item>Wetube (Follow System)</item>
+        <item>Wetube (Sec, Light)</item>
+        <item>Wetube (Sec, Dark)</item>
+        <item>Wetube (Sec, Follow System)</item>
+        <item>Device Theme (Light)</item>
+        <item>Device Theme (Dark)</item>
+        <item>Device Theme (Follow System)</item>
+    </string-array>
+    <string-array name="themeTypeVal">
+        <item>idk</item>
+        <item>w</item>
+        <item>wd</item>
+        <item>wa</item>
+        <item>wo</item>
+        <item>wdo</item>
+        <item>wao</item>
+        <item>d</item>
+        <item>dd</item>
+        <item>da</item>
+    </string-array>
+</resources>

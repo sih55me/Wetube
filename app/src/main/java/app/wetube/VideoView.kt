@@ -1,0 +1,2509 @@
+package app.wetube
+
+import android.Manifest.permission.POST_NOTIFICATIONS
+import android.annotation.SuppressLint
+import android.app.ActionBar
+import android.app.Activity
+import android.app.ActivityManager
+import android.app.AlertDialog
+import android.app.AppOpsManager
+import android.app.Dialog
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Person
+import android.app.PictureInPictureParams
+import android.app.Presentation
+import android.app.RemoteAction
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.pm.ShortcutInfo
+import android.content.res.ColorStateList
+import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Point
+import android.graphics.Rect
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Icon
+import android.media.AudioManager
+import android.media.MediaRouter
+import android.net.Uri
+import android.os.Binder
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Parcelable
+import android.preference.PreferenceManager
+import android.support.v4.app.NotificationCompat
+import android.support.v4.content.FileProvider
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
+import android.support.v7.graphics.Palette
+import android.util.Log
+import android.util.Rational
+import android.util.TypedValue
+import android.view.Display
+import android.view.Gravity
+import android.view.KeyEvent
+import android.view.Menu
+import android.view.MenuItem
+import android.view.PointerIcon
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
+import android.view.WindowManager.InvalidDisplayException
+import android.widget.AbsListView
+import android.widget.AdapterView
+import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.PopupMenu
+import android.widget.ScrollView
+import android.widget.SeekBar
+import android.widget.Toast
+import android.window.BackEvent
+import android.window.OnBackAnimationCallback
+import android.window.OnBackInvokedCallback
+import androidx.annotation.RequiresApi
+import app.wetube.VideoView.Companion.VOLUME_DIALOG
+import app.wetube.adapter.ColorizeAdapter
+import app.wetube.core.DabelClick
+import app.wetube.core.Utils
+import app.wetube.core.dabelClick
+import app.wetube.core.fadeOut
+import app.wetube.core.getThemeId
+import app.wetube.core.info
+import app.wetube.core.isTv
+import app.wetube.core.releaseParent
+import app.wetube.core.setupStyleText
+import app.wetube.core.setupTheme
+import app.wetube.core.showBackButton
+import app.wetube.core.tryOn
+import app.wetube.databinding.VideoViewBinding
+import app.wetube.databinding.VolumeLayoutBinding
+import app.wetube.databinding.ZoomBinding
+import app.wetube.item.ChannelDetail
+import app.wetube.item.Video
+import app.wetube.manage.db.VidDB
+import app.wetube.nothing.NothingPlayer
+import app.wetube.p.FadeViewHelper
+import app.wetube.p.formatTime
+import app.wetube.page.dialog.QRCodePage
+import app.wetube.pryektr.PlayerProyektor
+import app.wetube.service.ControlReceiver
+import app.wetube.service.FloatVideo
+import app.wetube.service.FloatVideo.Companion.checkOverlayDisplayPermission
+import app.wetube.service.FloatVideo.Companion.isPipServiceRunning
+import app.wetube.service.FloatVideo.Companion.requestOverlayDisplayPermission
+import app.wetube.service.Yt
+import app.wetube.window.Paper
+import com.bumptech.glide.Glide
+import com.bumptech.glide.Priority
+import com.bumptech.glide.request.animation.GlideAnimation
+import com.bumptech.glide.request.target.BitmapImageViewTarget
+import com.bumptech.glide.request.target.SimpleTarget
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlaybackRate
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.YouTubePlayerListener
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.options.IFramePlayerOptions
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.utils.YouTubePlayerTracker
+import java.io.File
+import java.io.FileOutputStream
+import kotlin.random.Random
+
+
+class VideoView : Activity(), PlayerProyektor.Connection{
+    var isNotch = false
+    private val roter by lazy{ getSystemService(Context.MEDIA_ROUTER_SERVICE) as MediaRouter }
+    val db by lazy { VidDB(this) } ;
+    var menu : Menu? = null
+
+
+    var fulldia: Dialog? = null
+    /**
+     * Use in Vertical mode
+     **/
+    private var lockPot = false
+    /**
+     * Use in [VOLUME_DIALOG]
+     **/
+    private val volView by lazy { ScrollView(this) }
+    /**
+     * Use in [isInMultiWindowMode]
+     **/
+    private var lockFull = false
+    private var mPresentation : Presentation? = null
+    private var noteId : Int = 0
+        set(value) {
+            field = value
+            Yt.link = value
+        }
+    private var video_id : String = ""
+        set(value) {
+            field = value
+            Yt.videoId = value
+        }
+    private var uyt: YouTubePlayer? = null
+    var play = false;
+    private var mute = false;
+
+    /**
+     * "[now]" mean current time
+     **/
+    var now
+        set(value){
+            Yt.now = value
+        }
+        get() = Yt.now;
+
+    val displeiyTvL = object : MediaRouter.SimpleCallback(){
+        override fun onRouteSelected(
+            router: MediaRouter?,
+            type: Int,
+            info: MediaRouter.RouteInfo?,
+        ) {
+            lookThisInTv()
+        }
+
+        override fun onRouteUnselected(
+            router: MediaRouter?,
+            type: Int,
+            info: MediaRouter.RouteInfo?,
+        ) {
+            lookThisInTv()
+        }
+
+        override fun onRoutePresentationDisplayChanged(
+            router: MediaRouter?,
+            info: MediaRouter.RouteInfo?,
+        ) {
+            lookThisInTv()
+        }
+    }
+
+    val sbs by lazy{ TranslucentHelper(this) }
+
+    fun lookThisInTv() {
+        val info = roter.getSelectedRoute(
+            MediaRouter.ROUTE_TYPE_LIVE_VIDEO);
+        var displayShow : Display? = null
+        if(info != null) {
+            displayShow = info.presentationDisplay
+            if (mPresentation != null && mPresentation?.display != displayShow) {
+                mPresentation?.dismiss();
+                info("Disconnect from tv")
+                bin.videoview.let {
+                    it.parent.let {p->
+                        if(p is ViewGroup){
+                            p.removeView(it)
+                        }
+                    }
+                    bin.saverContainer.addView(it)
+                }
+            }
+        }
+        if (mPresentation == null && displayShow != null) {
+            // Initialise a new Presentation for the Display
+            mPresentation = Presentation(this, displayShow)
+            bin.videoview.let {
+                it.tag = it.layoutParams
+                it.parent.let {p->
+                    if(p is ViewGroup){
+                        p.removeView(it)
+                    }
+                }
+                mPresentation!!.setContentView(it)
+            }
+
+            mPresentation!!.setOnDismissListener{
+                if (it == mPresentation) {
+                    mPresentation = null;
+                }
+            }
+
+            // Try to show the presentation, this might fail if the display has
+            // gone away in the mean time
+            try {
+                mPresentation!!.show()
+
+                info("Join with ${info?.getName(this)} ")
+            } catch (ex: InvalidDisplayException) {
+                // Couldn't show presentation - display was already removed
+                mPresentation = null
+            }
+        }
+    }
+    /**
+     * Use in [VOLUME_DIALOG]
+     **/
+    private val volumePhone by lazy{ VolumeLayoutBinding.inflate(layoutInflater)}
+    /**
+     * Use in [VOLUME_DIALOG]
+     **/
+    private val volumePlayer by lazy {   VolumeLayoutBinding.inflate(layoutInflater)}
+    val bin by lazy { VideoViewBinding.inflate(layoutInflater) } ;var stvo = false
+    var l:YouTubePlayer = NothingPlayer.newInstance()
+        set(value) {
+            field = value
+            Yt.youTubePlayer = value
+        }
+    var fulskrinBek = Any()
+    var ll :YouTubePlayerListener = object : AbstractYouTubePlayerListener(){} ;
+    var thumb : Bitmap? = null
+    private var isFullscreen = false
+    private val audioManager: AudioManager
+        get() = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    /**
+     * selected video
+     **/
+    var noted : Video?
+        get() = Yt.noted
+        set(value){
+            Yt.noted = value
+
+        }
+
+    var newCon:Configuration? = null
+    /**
+     * Use in [playercontrols]
+     **/
+    lateinit var nobu : NotificationCompat.Builder
+    /**
+     * Use in [playercontrols]
+     **/
+    val notifMan : NotificationManager get() = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    /**
+     * value to set fullscreen state.
+     * Use in [exitFullscreen] n' [enterFullscreen]
+     **/
+    var isInFullscreen = false
+    var collape = false
+    val sp by lazy { PreferenceManager.getDefaultSharedPreferences(applicationContext) }
+    val ms : MediaSessionCompat by lazy { MediaSessionCompat(this, "Yt") }
+    private var isnotifexist = false
+    var p = 1;var max = 0f
+    var isLoop = false
+    val track by lazy{YouTubePlayerTracker()}
+    var isSeeking = false
+    var stillPip = false
+    val playlist by lazy {
+        ColorizeAdapter(
+            this,
+            android.R.layout.simple_list_item_single_choice,
+            mutableListOf<String>()
+        )
+    }
+
+    private var pipStand = Intent()
+
+
+
+    override fun onDestroy() {
+        bin.videoview.destroy()
+        if(isnotifexist) {
+            tryOn {
+                notifMan.cancel(1)
+            }
+        }
+        Yt.clear()
+        ms.release()
+
+        if (isPipServiceRunning(FloatVideo::class.java)) {
+            stopService(pipStand)
+        }
+        super.onDestroy()
+    }
+
+
+    override fun onBackPressed() {
+        when{
+            packageManager.hasSystemFeature("android.software.leanback") -> finishAndGoToMain()
+            isInFullscreen -> if(!lockFull){
+                exitFullscreen()
+            }else{
+                finishAndGoToMain()
+            }
+            else -> finishAndGoToMain()
+        }
+
+    }
+
+
+
+
+    private fun exitFullscreen(anim: Boolean = true) {
+        bin.videoLay.root.setSystemUiVisibility(0)
+        window?.decorView?.systemUiVisibility = 0
+        window?.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        window?.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_ATTACHED_IN_DECOR)
+        bin.swipe.visibility = View.VISIBLE
+        bin.whoc.layoutParams?.apply {
+            val s = ViewGroup.LayoutParams.WRAP_CONTENT
+            height = s
+            width = s
+        }
+        if (!resources.getBoolean(R.bool.tablet)) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER)
+        }
+        Runnable{
+            //        scrollView.setEnableScrolling(true);
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            bin.videoLay.toggleFullScreen.contentDescription = getString(R.string.fullscreen)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                bin.videoLay.toggleFullScreen.tooltipText = getString(R.string.fullscreen)
+            }
+            bin.straing.layoutParams?.height = ViewGroup.LayoutParams.WRAP_CONTENT
+            setUiState(true)
+            bin.videoLay.toggleFullScreen.setImageResource(R.drawable.fullscreen)
+
+
+//            bin.videoview.layoutParams?.apply {
+//                val s = ViewGroup.LayoutParams.WRAP_CONTENT
+//                height = s
+//                width = s
+//            }
+            tryOn{ isImmersive = false }
+
+            lockPot = false
+            updateView()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                onBackInvokedDispatcher.unregisterOnBackInvokedCallback(fulskrinBek as OnBackInvokedCallback)
+            }
+        }.let {r->
+            if(anim){
+                bin.swipe.let {v->
+                    v.translationY = 0F
+                    v.alpha = 1f
+                }
+                r.run()
+            }else{
+                r.run()
+            }
+        }
+
+    }
+
+
+
+    private fun enterFullscreen(pot:Boolean = false, anim: Boolean = true) {
+        if(bin.swipe.visibility != View.GONE){
+            bin.swipe.translationY = 0F
+            bin.swipe.alpha = 1f
+        }
+        val r = Runnable {
+            bin.swipe.visibility = View.GONE
+            setUiState(false)
+//            bin.videoview.layoutParams?.apply {
+//                val s = ViewGroup.LayoutParams.MATCH_PARENT
+//                height = s
+//                width = s
+//            }
+            bin.straing.layoutParams?.height = ViewGroup.LayoutParams.MATCH_PARENT
+            //        scrollView.setEnableScrolling(false);
+
+            requestedOrientation = if (pot) {
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
+            bin.whoc.layoutParams?.apply {
+                val s = ViewGroup.LayoutParams.MATCH_PARENT
+                height = s
+                width = s
+            }
+
+            lockPot = pot
+            bin.videoLay.toggleFullScreen.contentDescription =
+                getString(R.string.exit_fullscreen)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                bin.videoLay.toggleFullScreen.tooltipText = getString(R.string.exit_fullscreen)
+            }
+            bin.videoLay.toggleFullScreen.setImageResource(R.drawable.exit_fullscreen)
+
+            window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_ATTACHED_IN_DECOR)
+            window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                    0,
+                    fulskrinBek as OnBackInvokedCallback
+                )
+            }
+            bin.videoLay.seekbarStock.visibility = View.VISIBLE
+        }
+        if(anim){
+            bin.swipe.animate().translationY(bin.swipe.measuredHeightAndState.toFloat()).alpha(0F).withEndAction(r)
+        }else{
+            r.run()
+        }
+
+
+
+
+        val flags =
+            View.SYSTEM_UI_FLAG_LOW_PROFILE or
+                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                    (View.SYSTEM_UI_FLAG_FULLSCREEN) or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_IMMERSIVE
+        window?.decorView?.systemUiVisibility = flags
+        updateView()
+        try{
+            isImmersive = true
+        }catch (_: Exception){
+
+        }
+    }
+
+    private fun requestNotif(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(arrayOf(POST_NOTIFICATIONS), 1)
+        }
+    }
+
+    fun loadPIPR(){
+        val u = til
+        val s = Pair(
+            (u.pxToDp(405F).toInt() / 1.45).toInt(),
+            (u.pxToDp(305F).toInt() / 1.45).toInt()
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val r = Rational(s.first,s.second)
+            val fi = openVideoNTicket(this@VideoView, noted?:return,p, intent = roundIntent)
+            val ra = RemoteAction(
+                Icon.createWithResource(this@VideoView,R.drawable.close),
+                getString(R.string.close),getString(R.string.close),
+                PendingIntent.getActivity(applicationContext, 3, fi.putExtra("finish", true),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            )
+            val i = Intent(applicationContext, app.wetube.service.ControlReceiver::class.java)
+            val s = if (play)getString(R.string.pause) else getString(R.string.play)
+            val a = RemoteAction(
+                Icon.createWithResource(this@VideoView,if(!play)R.drawable.play else R.drawable.pause), s,s,
+                PendingIntent.getBroadcast(applicationContext, 2, i.putExtra("state", play),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            )
+            setPictureInPictureParams(PictureInPictureParams.Builder()
+                .setSourceRectHint(Rect(0,0,0,0))
+                .setActions(mutableListOf(ra,a))
+                .setAspectRatio(r).also{
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        it.setExpandedAspectRatio(r)
+                        it.setTitle(title)
+                        it.setCloseAction(ra)
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        it.setAutoEnterEnabled(true)
+                        it.setSeamlessResizeEnabled(true)
+                    }
+                }.build())
+
+        }
+    }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.video_prefence, menu)
+        menu?.apply{
+            add("Zoom").setOnMenuItemClickListener {
+                AlertDialog.Builder(this@VideoView, if(!lockPot) this@VideoView.getThemeId() else 0).apply {
+                    val b = ZoomBinding.inflate(layoutInflater)
+                    b.x.setOnZoomInClickListener {_->
+                        bin.videoview.let{ y->
+                            y.scaleX = (y.scaleX + 0.1F)
+                        }
+                    }
+                    b.x.setOnZoomOutClickListener {_->
+                        bin.videoview.let{ y->
+                            y.scaleX = (y.scaleX - 0.1F)
+                        }
+                    }
+                    b.y.setOnZoomInClickListener {_->
+                        bin.videoview.let{ y->
+                            y.scaleY = (y.scaleY + 0.1F)
+                        }
+                    }
+                    b.y.setOnZoomOutClickListener {_->
+                        bin.videoview.let{ y->
+                            y.scaleY = (y.scaleY - 0.1F)
+                        }
+                    }
+                    b.xy.setOnZoomInClickListener {_->
+                        bin.videoview.let{ y->
+                            if(y.scaleY != y.scaleX){
+                                y.scaleY = y.scaleX
+                            }
+                            if(y.scaleX != y.scaleY){
+                                y.scaleX = y.scaleY
+                            }
+                            y.scaleY = (y.scaleY + 0.1F)
+                            y.scaleX = (y.scaleX + 0.1F)
+                        }
+                    }
+                    b.xy.setOnZoomOutClickListener {_->
+                        bin.videoview.let{ y->
+                            if(y.scaleY != y.scaleX){
+                                y.scaleY = y.scaleX
+                            }
+                            if(y.scaleX != y.scaleY){
+                                y.scaleX = y.scaleY
+                            }
+                            y.scaleY = (y.scaleY - 0.1F)
+                            y.scaleX = (y.scaleX - 0.1F)
+                        }
+                    }
+                    b.root.releaseParent()
+                    setView(b.root)
+                    setTitle("Zoom Video")
+                    setPositiveButton(R.string.close, null)
+                    setNeutralButton("Reset") { _,_->
+                        bin.videoview.animate().scaleX(1F).scaleY(1F)
+                    }
+                }.create().apply {
+                    if(!lockPot){
+                        window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        if (!isFullscreen) {
+                            window!!.setWindowAnimations(android.R.style.Animation_InputMethod)
+                            window!!.attributes?.height = bin.swipe.height + sbs.navigationBarHeight
+                            window!!.attributes?.width = bin.swipe.width
+                            window!!.attributes?.x = bin.swipe.x.toInt()
+                            window!!.attributes?.gravity = Gravity.BOTTOM
+                        } else {
+                            val s = Point()
+                            window!!.setWindowAnimations(android.R.style.Animation_Translucent)
+                            windowManager.defaultDisplay.getSize(s)
+                            val d = this@VideoView.windowManager.defaultDisplay
+                            window!!.attributes?.height =
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                            window!!.attributes?.width = d.height
+                            window!!.attributes?.gravity = Gravity.END
+                            tryOn{
+                                bin.straing.animate().translationX(-d.height.toFloat())
+                            }
+                        }
+                    }
+                    setOnDismissListener {
+                        bin.straing.animate().translationX(0F).scaleX(1F)
+                    }
+                }.show()
+                true
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                add("Minimize").setOnMenuItemClickListener {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && hasPermission()) {
+                        loadPIPR()
+                        enterPictureInPictureMode()
+                    } else {
+                        val message = if(Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) "PIP need Android 8 (a.k.a Oreo) or high, but you're using Android ${Build.VERSION.RELEASE}" else if(!hasPermission()) "You need to grant the permission to use PIP" else "Unknown Error"
+                        android.app.AlertDialog.Builder(this@VideoView).apply {
+                            setTitle("Picture in Picture is not supported in your device")
+                            setMessage(message)
+                            setPositiveButton(android.R.string.ok,null)
+                        }.show()
+                    }
+                    true
+                }
+            }
+            add("Random Duration").setOnMenuItemClickListener {
+                randomDur()
+                true
+            }
+            add("Volume").setOnMenuItemClickListener {
+
+                    openDialog(VOLUME_DIALOG)
+
+                true
+            }
+        }
+
+        return super.onCreateOptionsMenu(menu)
+
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        prepMenu(menu, true)
+        menu?.findItem(R.id.del_ic)?.also {
+            it.setTitle(if (db.listAsList().map { it.videoId }.contains(video_id)) R.string.del else R.string.add)
+        }
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    private fun prepMenu(menu: Menu?, fromActivity: Boolean) {
+        menu?.findItem(R.id.loop)?.isChecked = sp.getBoolean("loop", false)
+
+    }
+
+    @SuppressLint("MissingInflatedId", "RestrictedApi", "ResourceType")
+
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        when(keyCode){
+
+
+            KeyEvent.KEYCODE_TAB -> {
+                return true
+            }
+
+
+            KeyEvent.KEYCODE_DPAD_LEFT-> {
+                try {
+                    l.seekTo(now - skipDuraction)
+                }catch(_:Exception){}
+            }
+            KeyEvent.KEYCODE_J -> {
+                try {
+                    l.seekTo(now - skipDuraction)
+                }catch(_:Exception){}
+            }
+            KeyEvent.KEYCODE_0 -> {
+                try {
+                    l.seekTo(0f)
+                }catch(_:Exception){}
+            }
+            KeyEvent.KEYCODE_DPAD_RIGHT  -> {
+                try {
+                    l.seekTo(now + skipDuraction)
+                }catch(_:Exception){}
+            }
+            KeyEvent.KEYCODE_L -> {
+                try {
+                    l.seekTo(now + skipDuraction)
+                }catch(_:Exception){}
+            }
+            KeyEvent.KEYCODE_VOLUME_UP ->{
+                return super.onKeyDown(keyCode, event)
+            }
+
+            KeyEvent.KEYCODE_SPACE ->{
+                if(play)l.pause() else l.play()
+                return true
+            }
+
+            KeyEvent.KEYCODE_K ->{
+                if(play)l.pause() else l.play()
+            }
+
+
+
+            KeyEvent.KEYCODE_F ->{
+
+                if (isInFullscreen) {
+                    exitFullscreen()
+                } else {
+                    enterFullscreen()
+                }
+                isInFullscreen = !isInFullscreen
+            }
+            KeyEvent.KEYCODE_VOLUME_DOWN ->{
+                return super.onKeyDown(keyCode, event)
+            }
+            KeyEvent.KEYCODE_VOLUME_MUTE ->{
+                if(!mute) {
+                    l.mute()
+                    mute = true
+                }else{
+                    l.unMute()
+                    mute = false
+                }
+                snackBar(if(mute) "Mute player" else "Unmute player")
+            }
+            KeyEvent.KEYCODE_M ->{
+                if(!mute) {
+                    l.mute()
+                    mute = true
+                }else{
+                    l.unMute()
+                    mute = false
+                }
+                snackBar(
+                    if(mute) "Mute player" else "Unmute player"
+                )
+            }
+            KeyEvent.KEYCODE_DPAD_DOWN ->{
+                window.openPanel(Window.FEATURE_OPTIONS_PANEL, KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MENU))
+            }
+
+            KeyEvent.KEYCODE_DPAD_CENTER -> {
+                if(play)l.pause() else l.play()
+                return true
+            }
+
+
+            else -> {
+                Toast.makeText(this, "Pressed key code $keyCode", Toast.LENGTH_SHORT).show()
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    fun prev(){
+        val d = intent.getParcelableArrayExtra("playlist")
+        if (0 != p) try{
+            val note = d?.get(p - 1) as Video
+            p -= 1
+            craftVideo(note)
+        }catch (e:Exception){
+            Log.e("Yt", "No more videos")
+        }
+        refreshList()
+        reCekList()
+    }
+
+    fun craftVideo(note: Video){
+        video_id = note.videoId
+        noteId = note.id
+        Yt.link = note.id
+        title = note.title
+        noted = note
+        runOnUiThread {
+            l.loadVideo(note.videoId, 0f)
+            title  = note.title
+            setTaskDescription(ActivityManager.TaskDescription(note.title))
+        }
+        setupThumb
+        cekCenel()
+    }
+    fun share(){
+        val shareIntent = Intent()
+        val stxt = "youtube.com/watch?v=${video_id}"
+        shareIntent.apply{
+            action = Intent.ACTION_SEND
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, stxt)
+            putExtra(Intent.EXTRA_TITLE, "YouTube Video Link")
+        }
+        startActivity(Intent.createChooser(shareIntent, getString(R.string.share)))
+    }
+
+    fun reCekList(){
+        bin.playlist.clearChoices()
+        bin.playlist.setItemChecked(p,true)
+    }
+    fun next(){
+        val d = intent.getParcelableArrayExtra("playlist")
+        if (d?.size?.minus(1)  != p) try{
+            val note = d?.get(p + 1) as Video
+            p += 1
+
+            craftVideo(note)
+        }catch (e:Exception){
+            Log.e("Yt", "No more videos")
+        }
+        reCekList()
+        refreshList()
+    }
+
+    private fun refreshList() {
+        playlist.clear()
+        nList()
+        tryOn{
+            playlist.notifyDataSetChanged()
+
+        }
+    }
+
+    fun pip(){
+        if(!isPipServiceRunning(FloatVideo::class.java)) {
+            if (checkOverlayDisplayPermission()) {
+                // If permission is granted, start the floating window service and finish the activity
+                pipStand = Intent(this, FloatVideo::class.java)
+                startService(pipStand.putExtra("id", video_id))
+            } else {
+                // If permission is not granted, request overlay permission
+                requestOverlayDisplayPermission()
+            }
+        }else{
+            stopService(pipStand)
+            pip()
+        }
+    }
+
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putFloat("time", now)
+        outState.putParcelable("item", noted)
+        outState.putBoolean("play", play)
+        super.onSaveInstanceState(outState)
+    }
+
+
+    val c = object: MediaSessionCompat.Callback(){
+        override fun onPlay() {
+            l.play()
+        }
+
+        override fun onPause() {
+            l.pause()
+        }
+
+        override fun onSeekTo(pos: Long) {
+            l.seekTo((pos / 1000L).toFloat())
+        }
+
+        override fun onSkipToPrevious() {
+            prev()
+        }
+
+        override fun onSkipToNext() {
+            next()
+        }
+
+    }
+    fun changeSeekbarColor(c:Int){
+        val skbrs =arrayOf( bin.videoLay.seekbarStock, bin.videoLay.loadingVideo)
+        for (sb in skbrs) {
+            try{
+                sb.getProgressDrawable().setTint(c);
+                if (sb is SeekBar) {
+                    sb.getThumb().setTint(c);
+                }
+            }catch (_: Throwable){
+
+            }
+        }
+    }
+
+    fun changeButtonColor(i:Pair<Int,Int>){
+        val btns =arrayOf( bin.videoLay.pausePlay, bin.videoLay.toggleFullScreen)
+        for (sb in btns) {
+            try{
+                sb.backgroundTintList = ColorStateList.valueOf(i.first)
+                sb.imageTintList = ColorStateList.valueOf(i.second)
+            }catch (_: Throwable){
+
+            }
+        }
+    }
+    val til by lazy { Utils(this) }
+    @SuppressLint("ClickableViewAccessibility", "SetJavaScriptEnabled")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
+        setupTheme()
+        p = intent.getIntExtra("vi", 1)
+        setContentView(bin.root)
+        setActionBar(bin.videoLay.tul)
+        updateView()
+        showBackButton()
+
+        fulldia = object :Dialog(this, getThemeId()){
+            init {
+                window?.setWindowAnimations(android.R.style.Animation_Dialog)
+                window?.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS or WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
+                requestWindowFeature(Window.FEATURE_NO_TITLE)
+                setCanceledOnTouchOutside(false)
+                window?.decorView?.systemUiVisibility = View.SYSTEM_UI_FLAG_LOW_PROFILE or
+                        View.SYSTEM_UI_FLAG_FULLSCREEN or
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or (View.SYSTEM_UI_FLAG_FULLSCREEN) or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_IMMERSIVE
+            }
+
+            override fun show() {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    if(isNotch) {
+                        window?.attributes?.layoutInDisplayCutoutMode =
+                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                    }else{
+                        window?.attributes?.layoutInDisplayCutoutMode =
+                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+                    }
+                }
+                super.show()
+            }
+            override fun onBackPressed() {
+                this@VideoView.onBackPressed()
+            }
+        }
+        window.decorView.isEnabled = !isTv
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                fulskrinBek = object :OnBackAnimationCallback{
+                    override fun onBackInvoked() {
+                        window.decorView.animate().y(800F).withEndAction{
+                            exitFullscreen()
+                            window.decorView.apply {
+                                (0F).let {
+                                    y = it
+                                    scaleY = it + 1F
+                                    scaleX = it + 1F
+                                }
+                            }
+                        }
+                    }
+
+                    override fun onBackStarted(backEvent: BackEvent) {
+                        window.decorView.animate().scaleX(0.8F).scaleY(0.8F).y(100F)
+                    }
+
+
+
+                    override fun onBackCancelled() {
+                        (0F).let {
+                            window.decorView.animate().y(it).scaleX(it + 1F).scaleY(it + 1F)
+                        }
+                    }
+
+                }
+            } else{
+                fulskrinBek = OnBackInvokedCallback {
+                    exitFullscreen()
+                }
+            }
+        }
+
+
+
+//        bin.toolbar.setNavigationOnClickListener {
+//            collape = !collape
+//            when(collape){
+//                true -> {
+//                    bin.videoview.visibility = View.INVISIBLE
+//                    bin.play.show()
+//                }
+//                false -> {
+//                    fadeIn(bin.videoview)
+//                    bin.play.hide()
+//                }
+//            }
+//
+//        }
+
+
+        val sp = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+        pipStand = Intent(this, FloatVideo::class.java)
+
+        Yt.vintent = intent
+        p = intent.getIntExtra("vi", 0)
+        reloadPref()
+        if(savedInstanceState != null) {
+            val d = savedInstanceState.getParcelable<Video>("item")
+            if(d is Video) {
+                intent.putExtra("vid", d)
+            }
+        }
+        val item = intent.getParcelableExtra<Video>("vid")
+        if ((item is Video)) {
+            noted = item
+            if(noted != null) {
+                noteId = noted?.id!!
+            }
+            if (item != null) {
+                video_id = item.videoId
+            }
+            if (item != null) {
+                Yt.videoId = item.videoId
+            }
+            if (item != null) {
+                title = item.title
+            }
+            val l = db.listAsList().map { it.videoId }
+            cekCenel()
+            checkStateSave(l.contains(item.videoId))
+        }
+
+
+
+
+
+        bin.videoLay.next.setOnClickListener {
+            next()
+        }
+
+
+
+
+        var isReadyToChange = false
+
+        bin.videoview.isBackgroundPlaybackEnabled = (true)
+        bin.videoview.isEnabled = !sp.getBoolean("tv", false)
+        val fade = FadeViewHelper(bin.videoLay.container).apply {
+            visibilityListener = {
+                bin.videoLay.tul.animate().translationY(if(it) -bin.videoLay.tul.height.toFloat() else 0F)
+
+            }
+        }
+        var erdialog = AlertDialog.Builder(this, getThemeId()).setTitle(android.R.string.VideoView_error_title).create()
+        ms.setCallback(c)
+        ll = object : AbstractYouTubePlayerListener() {
+            override fun onError(youTubePlayer: YouTubePlayer, error: PlayerConstants.PlayerError) {
+                super.onError(youTubePlayer, error)
+                erdialog = AlertDialog.Builder(this@VideoView).setTitle(android.R.string.VideoView_error_title).setMessage(error.name).setPositiveButton(android.R.string.ok, null).create()
+                erdialog.window!!.attributes!!.apply {
+                    val s  = Point()
+                    windowManager.defaultDisplay.getSize(s)
+                    width = if(s.x > s.y) windowManager.defaultDisplay.height else windowManager.defaultDisplay.width
+                    var g = Gravity.TOP
+                    if(isTablet and !isInFullscreen) {
+                        g = g or Gravity.START
+                    }
+                    gravity = g
+                    height = ViewGroup.LayoutParams.WRAP_CONTENT
+                }
+                erdialog.window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                erdialog.window!!.attributes!!.dimAmount = 0F
+                erdialog.window!!.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+                try{
+                    erdialog.show()
+                    erdialog.setMessage(error.name)
+                }catch (_: Throwable){
+                    Toast.makeText(this@VideoView, error.name, Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onVideoId(youTubePlayer: YouTubePlayer, videoId: String) {
+                super.onVideoId(youTubePlayer, videoId)
+                if(erdialog.isShowing){
+                    erdialog.dismiss()
+                }
+                fadeOut(bin.videoLay.errorContainer)
+                db.doing {
+                    val d = it.listAsList()
+                    val itIs = d.map { it.videoId }.contains(videoId)
+                    checkStateSave(itIs)
+                    if(itIs) {
+                        title = d.find { it.videoId == videoId }?.title
+                    }
+                }
+
+            }
+            override fun onReady(youTubePlayer: YouTubePlayer) {
+
+
+                l = youTubePlayer
+
+                isReadyToChange = true
+                youTubePlayer.addListener(track)
+                youTubePlayer.addListener(fade)
+                if(savedInstanceState != null){
+                    if(!savedInstanceState.getBoolean("play")){
+                        youTubePlayer.cueVideo(video_id, savedInstanceState.getFloat("time"))
+                    }else{
+                        youTubePlayer.loadVideo(video_id, savedInstanceState.getFloat("time"))
+                    }
+                }
+                youTubePlayer.loadVideo(video_id, savedInstanceState?.getFloat("time") ?: now)
+            }
+
+            override fun onCurrentSecond(youTubePlayer: YouTubePlayer, second: Float) {
+                now = second
+                try {
+                    savedInstanceState!!.putFloat("time", second)
+                } catch (_: NullPointerException) {
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ms.setPlaybackState(getPlayBackState())
+                }
+                setProgress(second.toInt())
+                if (!isSeeking) {
+                    bin.videoLay.seekbarStock.progress = second.toInt()
+                }
+
+
+                super.onCurrentSecond(youTubePlayer, second)
+            }
+
+            override fun onVideoDuration(youTubePlayer: YouTubePlayer, duration: Float) {
+                max = duration
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ms.setMetadata(
+                        MediaMetadataCompat.Builder()
+                            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration.toInt().toLong() * 1000L)
+                            .build()
+                    )
+                }
+                bin.videoLay.seekbarStock.setMax(duration.toInt())
+                super.onVideoDuration(youTubePlayer, duration)
+            }
+
+            override fun onStateChange(
+                youTubePlayer: YouTubePlayer,
+                state: PlayerState,
+            ) {
+                val r = fun(){
+                    val v = bin.videoLay.replayCo
+                    if(v.visibility != View.GONE){
+                        v.alpha = 1f
+                        v.translationY = 0F
+                        v.animate().translationY(-700F).alpha(0f).withEndAction {
+                                v.visibility = View.GONE
+                        }
+                    }
+                    fade.isDisabled = false
+                    val vd = bin.videoLay.duraction
+                    if(vd.visibility != View.VISIBLE) {
+                        vd.alpha = 0f
+                        vd.visibility = View.VISIBLE
+                        val t = 1F
+                        vd.animate()
+                            .alpha(t).scaleX(t).scaleY(t)
+                    }
+                    bin.videoLay.tul.animate().translationY(0F)
+
+
+                    bin.videoLay.root.background = null
+                }
+                play = when (state) {
+                    PlayerState.PLAYING -> {
+                        r()
+                        true
+                    }
+
+                    PlayerState.ENDED -> {
+                        val d = intent.getParcelableArrayExtra("playlist")
+                        if (d?.size?.minus(1)  != p) tryOn{
+                            val v = bin.videoLay.replayCo
+                            v.alpha = 0f
+                            v.translationY = -700F
+                            v.visibility = View.VISIBLE
+
+                            val note = d?.get(p + 1) as Video
+                            val d = windowManager.defaultDisplay
+                            Glide.with(this@VideoView).load("https://i.ytimg.com/vi/${note.videoId}/hqdefault.jpg").asBitmap().centerCrop().error(ColorDrawable(Color.BLACK)).into(object : BitmapImageViewTarget(bin.videoLay.imageView4){
+                                override fun setResource(resource: Bitmap?) {
+                                    super.setResource(resource)
+                                    if(resource == null)return
+                                    Palette.from(resource).generate{b->
+                                        (b?.dominantSwatch ?: b?.darkVibrantSwatch)?.let {
+                                            bin.videoLay.ntitle.setTextColor(it.bodyTextColor)
+                                            bin.videoLay.ninfo.setTextColor(it.titleTextColor)
+                                            bin.videoLay.ntitle.setShadowLayer(20F,0F,0F,it.rgb)
+                                            bin.videoLay.ninfo.setShadowLayer(20F,0F,0F,it.rgb)
+                                        }
+
+
+                                    }
+
+
+
+                                }
+                            })
+                            v.animate().translationY(0F).alpha(1f)
+                            val t = 0F
+
+                            bin.videoLay.ntitle.text = note.title
+                            fade.fade(1F)
+                            bin.videoLay.tul.animate().translationY(-bin.videoLay.tul.height.toFloat())
+                            fade.isDisabled = true
+                            val vd = bin.videoLay.duraction
+                            if(vd.visibility == View.VISIBLE) {
+                                vd.alpha = 1f
+                                vd.animate().alpha(t).scaleX(t).scaleY(t).withEndAction {
+                                        vd.visibility = View.GONE
+                                }
+                            }
+
+                        }
+                        else{
+                            bin.videoLay.root.background = ColorDrawable(window.statusBarColor)
+                        }
+                        false
+                    }
+
+                    else -> {
+                        r()
+                        false
+                    }
+                }
+                ms.isActive = play
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ms.setPlaybackState(getPlayBackState())
+                }
+                val normalCursor = Runnable{
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        window.decorView.pointerIcon = PointerIcon.getSystemIcon(this@VideoView,
+                            PointerIcon.TYPE_ARROW)
+                    }
+                }
+
+                bin.videoLay.loadingVideo.fadeSize(0F)
+                if (state == PlayerState.PLAYING) {
+                    normalCursor.run()
+                    fadeOut(bin.videoLay.errorContainer)
+                    bin.videoLay.pausePlay.setImageResource(R.drawable.pause)
+                    bin.videoLay.pausePlay.setContentDescription(
+                        bin.videoLay.pausePlay.getContext().getString(R.string.pause)
+                    )
+                    bin.videoLay.pausePlay.also {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            it.tooltipText = bin.videoLay.pausePlay.getContext().getString(R.string.pause)
+                        }
+                    }
+
+                } else if (state == PlayerState.ENDED) {
+                    normalCursor.run()
+                    if (!isLoop) {
+                        bin.videoLay.pausePlay.setImageResource(R.drawable.replay)
+                        bin.videoLay.pausePlay.setContentDescription(
+                            bin.videoLay.pausePlay.getContext().getString(R.string.play)
+                        )
+
+                        bin.videoLay.pausePlay.also {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                it.tooltipText = getString(R.string.play)
+                            }
+                        }
+
+                    } else {
+                        l.seekTo(0f)
+                    }
+                } else if (state == PlayerState.PAUSED) {
+                    normalCursor.run()
+                    bin.videoLay.pausePlay.setImageResource(R.drawable.play)
+                    bin.videoLay.pausePlay.setContentDescription(
+                        bin.videoLay.pausePlay.getContext().getString(R.string.play)
+                    )
+
+                    bin.videoLay.pausePlay.also {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            it.tooltipText = getString(R.string.pause)
+                        }
+                    }
+                } else if (state == PlayerState.BUFFERING) {
+                    bin.videoLay.loadingVideo.fadeSize(1F)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        window.decorView.pointerIcon = PointerIcon.getSystemIcon(this@VideoView,
+                            PointerIcon.TYPE_WAIT)
+                    }
+                }
+                playercontrols(play)
+                loadPIPR()
+                if (isInFullscreen) {
+                    enterFullscreen(lockPot)
+                }
+
+                super.onStateChange(youTubePlayer, state)
+            }
+        }
+        bin.videoview.setOnLongClickListener{
+            fade.toggleVisibility()
+            true
+        }
+        val changeTo = fun(position:Int,dol: Runnable){
+            if(!isReadyToChange)return
+            val d = intent.getParcelableArrayExtra("playlist")
+            try {
+                val note = d?.get(position) as Video
+                p = position
+                dol.run()
+                craftVideo(note)
+            } catch (e: Exception) {
+                Log.e("Yt", "No more videos")
+            }
+            refreshList()
+        }
+        with(bin.videoLay) {
+
+            val p  = View.OnClickListener{
+                if (track.state == PlayerState.PLAYING) {
+                    l.pause()
+                    it.setContentDescription(getString(R.string.play))
+                } else {
+                    l.play()
+                    it.setContentDescription(getString(R.string.pause))
+                }
+            }
+            pausePlay.setOnClickListener(p)
+            toggleFullScreen.setOnClickListener {
+                if(!lockPot){
+                    if (isInFullscreen) {
+                        exitFullscreen()
+                    } else {
+                        enterFullscreen()
+                    }
+                    isInFullscreen = !isInFullscreen
+                }else{
+                    exitFullscreen()
+                    isInFullscreen = false
+                }
+
+            }
+
+            toggleFullScreen.setOnLongClickListener {
+                if(!resources.getBoolean(R.bool.tablet) and !isInFullscreen){
+                    openDialog(VF_DIALOG)
+                }
+                true
+            }
+            val o = object : DabelClick() {
+                override fun onDoubleClick(v: View?) {
+                    pausePlay.callOnClick()
+                }
+
+                override fun onOneClick(v: View?) {
+                    fade.toggleVisibility()
+                }
+            }
+
+            bin.fadet.setOnClickListener(o)
+            with(root) {
+                setOnClickListener(o)
+            }
+
+            with(container) {
+                setOnClickListener(o)
+                setOnLongClickListener {
+                    pausePlay.callOnClick()
+                    true
+                }
+            }
+            with(tul){
+                setOnClickListener {
+                    fade.toggleVisibility()
+                }
+                setOnLongClickListener{
+                    true
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    setOnContextClickListener{
+                        true
+                    }
+                }
+            }
+            val sk = object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean,
+                ) {
+                    duraction.setText(
+                        formatTime(progress.toFloat()) + " / " + formatTime(track.videoDuration)
+                    )
+
+                    fade.isDisabled = fromUser
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar) {
+                    isSeeking = true
+                    bin.videoLay.duraction.animate().scaleX(1.5F).scaleY(1.5F).translationX(til.pxToDp(25F))
+                    fade.fade(1F)
+                    duraction.setText(
+                        formatTime(seekBar.progress.toFloat()) + " / " + formatTime(
+                            track.videoDuration
+                        )
+                    )
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar) {
+                    isSeeking = false
+                    bin.videoLay.duraction.animate().scaleX(1F).scaleY(1F).translationX(0F)
+                    l.seekTo(seekBar.progress.toFloat())
+                    duraction.text =
+                        formatTime(seekBar.progress.toFloat()) + " / " + formatTime(track.videoDuration)
+
+                }
+
+            }
+            playlistBtn.setOnClickListener {
+                val c = PopupMenu(it.context,it)
+                intent.getParcelableArrayExtra("playlist")?.forEachIndexed { i,v->
+                    if(v is Video){
+                        c.menu.add(0,i,i, v.title).setOnMenuItemClickListener {
+                            changeTo(it.order){}
+                            true
+                        }
+                    }
+                }
+                c.show()
+            }
+            seekbarStock.setOnSeekBarChangeListener(sk)
+        }
+        val options: IFramePlayerOptions = IFramePlayerOptions.Builder().controls(0).ivLoadPolicy(3).ccLoadPolicy(0).build()
+        val s = Point()
+
+        windowManager.defaultDisplay.getSize(s)
+        if (!resources.getBoolean(R.bool.tablet)) {
+            if (s.x > s.y) {
+                isInFullscreen = true
+                isFullscreen = true
+                enterFullscreen()
+            }
+        }
+        bin.videoview.also{t->
+            t.isFocusable = false
+            t.isFocusableInTouchMode = false
+            t.isClickable = false
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                t.setAllowClickWhenDisabled(false)
+            }
+            //change user agent
+            t.settings.javaScriptEnabled = true
+            t.initialize({
+                it.addListener(ll)
+            }, options)
+        }
+        bin.videoLay.playerControlForward.dabelClick {
+            if (it) {
+                l.seekTo(now + skipDuraction)
+            }
+        }
+
+
+        bin.videoLay.playerControlRewind.dabelClick {
+            if (it) {
+                l.seekTo(now - skipDuraction)
+            }
+        }
+        nList()
+        bin.playlist.apply{
+            adapter = playlist
+
+            choiceMode = AbsListView.CHOICE_MODE_SINGLE;
+            tryOn{
+                setItemChecked(p, true)
+            }
+
+
+            onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
+                changeTo(position){
+                    clearChoices()
+                    setItemChecked(position, true)
+                }
+            }
+            onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+                override fun onNothingSelected(parent: AdapterView<*>?) {
+                }
+
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long,
+                ) {
+                    changeTo(position){}
+                }
+            }
+        }
+
+        Yt.onPip = {
+            if(it){
+                l.pause()
+                tryOn{
+                    notifMan.cancel(1)
+                }
+            }else{
+                l.seekTo(now)
+                l.play()
+            }
+        }
+
+        initVolDia()
+
+    }
+
+    val skipDuraction get() = sp.getInt("skipdu", 10F.toInt()).toFloat()
+
+
+
+    private fun cekCenel() {
+        val de = intent.getParcelableArrayExtra("cplaylist")
+        val p = intent.getParcelableArrayExtra("playlist")?.map { it as Video }
+
+        if(!p.isNullOrEmpty()){
+            de?.get(this.p)?.let {
+                if (it !is ChannelDetail) return
+                Runnable{
+                    try {
+                        val m = bin.videoLay.tul.menu
+                        actionBar?.setSubtitle(it.title)
+                        val item =
+                            m.findItem(R.id.cenel_open) ?: m.add(
+                                0,
+                                R.id.cenel_open,
+                                1,
+                                it.title
+                            )
+                                .setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_NEVER)
+                        item.isVisible = true
+                        item.title = (getString(R.string.open) + " " + it.title)
+                        item.intent =
+                            Intent(this, ChannelInfo::class.java).putExtra("id", it.id)
+                    } catch (e: Exception) {
+                        info(e.message.orEmpty())
+                    }
+                }.let{
+                    try{
+                        Handler(mainLooper).postDelayed(it, 800L)
+                    }catch (_: Exception){
+                        it.run()
+                    }
+                }
+
+            }
+        }
+    }
+
+
+
+    private fun updateView() {
+
+
+        val typedValue =  TypedValue();
+        getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)
+        bin.videoLay.tul.setupStyleText()
+        bin.videoLay.tul.layoutParams.height = TypedValue.complexToDimensionPixelSize(typedValue.data, resources.displayMetrics)
+    }
+
+    override fun onMultiWindowModeChanged(isInMultiWindowMode: Boolean, newConfig: Configuration?) {
+        super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
+
+    }
+
+
+
+    override fun onKeyShortcut(keyCode: Int, event: KeyEvent?): Boolean {
+        if(event?.isCtrlPressed == true){
+            if (keyCode == KeyEvent.KEYCODE_W) {
+                finishAndGoToMain()
+                return true
+            }
+        }
+        return super.onKeyShortcut(keyCode, event)
+    }
+
+
+    private fun lockNFull(isIt:Boolean){
+        bin.videoLay.toggleFullScreen.visibility = when (isIt) {
+            true -> View.GONE
+            else -> View.VISIBLE
+        }
+        if(isIt){
+            if (!isTablet) {
+                isInFullscreen = true
+                enterFullscreen()
+            }
+        }
+    }
+
+    fun nList(){
+        print(intent.getParcelableArrayExtra("playlist")?.joinToString(separator = "\n"))
+        intent.getParcelableArrayExtra("playlist")?.forEach {
+            val text : String = when(it){
+                is Video -> it.title
+                else -> it.toString()
+            }
+
+            playlist.add(text)
+        }
+    }
+
+
+
+    private fun randomDur() {
+        try {
+            l.seekTo(Random.nextInt(0, max.toInt()).toFloat())
+        } catch (e: Exception) {
+            snackBar("Controller not ready")
+        }
+    }
+    val isTablet get() = resources.getBoolean(R.bool.tablet)
+
+    fun checkStateSave(isSave:Boolean = false){
+        val d=  if (isSave) R.drawable.delete else R.drawable.add
+        invalidateOptionsMenu()
+        bin.manage.apply{
+            setCompoundDrawablesWithIntrinsicBounds(
+                d,
+                0,
+                0,
+                0
+            )
+            text = getString(if (isSave) R.string.del else R.string.add)
+        }
+    }
+
+    val setupThumb : Unit get() {
+        tryOn{
+            val d = windowManager.defaultDisplay
+            Glide.with(this@VideoView.baseContext)
+                .load("https://i.ytimg.com/vi/${video_id}/hqdefault.jpg")
+                .asBitmap()
+                .placeholder(R.drawable.ic_launcher_background)
+                .error(R.drawable.unhappy)
+                .priority(Priority.HIGH)
+                .approximate()
+                .dontAnimate()
+                .into(object :
+                    SimpleTarget<Bitmap>(d.width,d.height) {
+                    override fun onResourceReady(
+                        resource: Bitmap?,
+                        glideAnimation: GlideAnimation<in Bitmap>?,
+                    ) {
+                        thumb = resource
+                        if(resource != null){
+                            Palette.from(resource).generate{b->
+                                if(b == null)return@generate
+
+                                (b.darkVibrantSwatch?:b.darkMutedSwatch?:b.dominantSwatch)?.let {
+                                    window.statusBarColor = it.rgb
+                                    bin.videoLay.duraction.setTextColor(it.titleTextColor)
+                                    window.setBackgroundDrawable(ColorDrawable(it.rgb))
+                                    bin.videoLay.tul.backgroundTintList = ColorStateList.valueOf(it.rgb)
+                                    bin.plti.setTextColor(it.bodyTextColor)
+                                    window.navigationBarColor = it.rgb
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                                        window.navigationBarDividerColor = it.titleTextColor
+                                    }
+                                    bin.playlist.divider = ColorDrawable(it.bodyTextColor)
+                                    with(playlist) {
+                                        color = it.titleTextColor
+                                        tryOn {
+                                            notifyDataSetChanged()
+                                        }
+                                    }
+                                }
+                                val matchUi = fun(it: Palette.Swatch){
+                                    bin.videoLay.duraction.backgroundTintList = ColorStateList.valueOf(it.rgb)
+                                    bin.videoLay.duraction.setTextColor(it.rgb)
+                                    bin.videoLay.duraction.setShadowLayer(10F,0F,0F,it.titleTextColor)
+                                    changeButtonColor(Pair(it.rgb, it.rgb))
+
+                                }
+                                (b.lightVibrantSwatch?:b.lightMutedSwatch)?.let {
+                                    changeSeekbarColor((it.rgb))
+                                    matchUi(it)
+                                    bin.videoLay.tul.setTitleTextColor(it.bodyTextColor)
+                                    bin.videoLay.tul.setSubtitleTextColor(it.bodyTextColor)
+                                }
+                                (b.darkMutedSwatch?:b.dominantSwatch)?.let {
+                                    bin.videoLay.tul.setTitleTextColor(it.bodyTextColor)
+                                    bin.videoLay.tul.setSubtitleTextColor(it.rgb)
+                                }
+                            }
+                        }
+                        setTaskDescription(ActivityManager.TaskDescription(noted?.title, resource, window.statusBarColor))
+                    }
+
+
+                })
+        }
+    }
+
+    val d = Activity.ScreenCaptureCallback{
+        window.decorView.animate().scaleX(0.2F).withEndAction {
+            window.decorView.animate().scaleX(1F)
+        }
+    }
+    override fun onStart() {
+        super.onStart()
+        setupThumb
+        registerScreenCaptureCallback(mainExecutor,d)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun blubblub(){
+        // Create a bubble intent.
+
+        val bubbleIntent = PendingIntent.getActivity(this, 0, Intent(this, MenuActivity::class.java).addFlags( Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_MUTABLE)
+
+
+
+// Create a sharing shortcut.
+
+
+// Create a bubble metadata.
+        val bubbleData = Notification.BubbleMetadata.Builder(bubbleIntent,
+            Icon.createWithResource(this, R.drawable.video))
+            .setDesiredHeight(600)
+            .setSuppressNotification(true)
+            .setAutoExpandBubble(true)
+            .build()
+        val chatPartner: Person = Person.Builder()
+            .setName("Chat partner")
+            .setImportant(true)
+            .build()
+        val shortcut =
+            ShortcutInfo.Builder(this, "vid")
+                .setCategories(setOf("vid"))
+                .setIntent(Intent(Intent.ACTION_DEFAULT))
+                .setLongLived(true)
+                .setShortLabel("vid")
+                .build()
+
+// Create a notification, referencing the sharing shortcut.
+        val builder = Notification.Builder(this, "1000")
+            .setContentIntent(bubbleIntent)
+            .setSmallIcon(R.drawable.video)
+            .setBubbleMetadata(bubbleData)
+            .setShortcutId("vid")
+            .setStyle(Notification.MessagingStyle(chatPartner).setConversationTitle("Chat partner").apply {
+                messages?.add(Notification.MessagingStyle.Message("mia", 12L, chatPartner))
+            })
+            .addPerson(chatPartner)
+        val c =  NotificationChannel("1000", "Video", NotificationManager.IMPORTANCE_HIGH)
+        c.description = "Wd";
+        c.setAllowBubbles(true);
+
+        notifMan.createNotificationChannel(c)
+        builder.setChannelId("1000")
+        notifMan.notify(2, builder.build())
+    }
+
+
+    private fun snackBar(t: String) {
+        info(t)
+    }
+
+    inner class WatchOnThis() : Binder(){
+        fun switchToVid(intent: Intent){
+            this@VideoView.getAll(intent)
+        }
+    }
+
+    companion object{
+        const val  PLAY_ACTION = "pauseBtn"
+        const val PAUSE_ACTION = "playBtn"
+        const val REW_ACTION = "rewBtn"
+        const val FOR_ACTION = "forBtn"
+        const val VOLUME_DIALOG = 1
+        const val QR_DIALOG = 2
+        const val ADD_DIALOG = 3
+        const val DEL_DIALOG = 4
+        const val VF_DIALOG = 5
+        const val PIP_PERMI_DIALOG = 6
+        const val REPLAY_DIALOG = 7
+    }
+
+    fun View.fadeSize(much:Float){
+        animate().scaleX(much).scaleY(much).alpha(much)
+    }
+
+    fun initVolDia(){
+        val onSeek:((Int, ImageButton) -> Unit) = {i, b->
+            if(i == 0){
+                b.setImageDrawable(getDrawable(R.drawable.volume_off))
+            }else{
+                b.setImageDrawable(getDrawable(R.drawable.volume))
+            }
+        }
+        volumePlayer.volumeseek.apply {
+            max = (100)
+            progress = plavol
+            onSeek(progress, volumePlayer.icon)
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean,
+                ) {
+                    plavol = progress.toInt()
+                    l.setVolume(plavol)
+                    onSeek(progress, volumePlayer.icon)
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                    volumePlayer.icon.animate().scaleX(1.5F).scaleY(1.5F)
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    volumePlayer.icon.animate().scaleX(1F).scaleY(1F)
+                }
+
+            })
+        }
+        volumePhone.info.text = "My Phone"
+        volumePlayer.info.text = "Player"
+        volumePhone.volumeseek.apply {
+            max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            progress = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            onSeek(progress, volumePhone.icon)
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean,
+                ) {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress,0)
+                    onSeek(progress, volumePhone.icon)
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                    volumePhone.icon.animate().scaleX(1.5F).scaleY(1.5F)
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    volumePhone.icon.animate().scaleX(1F).scaleY(1F)
+                }
+
+            })
+
+        }
+        val frame = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(volumePlayer.root)
+            addView(volumePhone.root)
+        }
+        volView.addView(frame)
+    }
+
+    override fun onCreateDialog(id: Int): Dialog? {
+        when(id){
+
+            REPLAY_DIALOG -> {
+                return Dialog(this).apply {
+                    bin.videoview.let{
+                        this.window?.let{w->
+                            w.setLayout(it.width, it.height)
+                            (it.layoutParams as LinearLayout.LayoutParams).let {p->
+                                w.setGravity(p.gravity)
+                                w.attributes.apply {
+                                    x = it.x.toInt()
+                                    y = it.y.toInt()
+                                }
+                            }
+                        }
+
+                    }
+
+                }
+            }
+        }
+        return super.onCreateDialog(id)
+    }
+
+
+
+    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+        return (if(isTv) {
+            event?.let{
+                onKeyDown(it.keyCode, it)
+            }
+        } else super.dispatchKeyEvent(event)) == true
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unregisterScreenCaptureCallback(d)
+        if (mPresentation != null) {
+            mPresentation?.dismiss();
+            mPresentation = null;
+        }
+    }
+
+    fun openDialog(id:Int):Dialog{
+        return when(id){
+            VOLUME_DIALOG -> {
+                object : Paper(this@VideoView){
+
+                    init {
+                        setOnDismissListener {
+                            volView.parent?.let{
+                                if(it is ViewGroup){
+                                    it.removeView(volView)
+                                }
+                            }
+                        }
+
+                        if(!lockPot){
+                            window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                            if (!isFullscreen) {
+                                window!!.attributes?.height = bin.swipe.height + sbs.navigationBarHeight
+                                window!!.attributes?.width = bin.swipe.width
+                                window!!.attributes?.x = bin.swipe.x.toInt()
+                                window!!.attributes?.gravity = Gravity.BOTTOM
+                            } else {
+                                val s = Point()
+                                windowManager.defaultDisplay.getSize(s)
+                                val d = this@VideoView.windowManager.defaultDisplay
+                                window!!.attributes?.height = ViewGroup.LayoutParams.MATCH_PARENT
+                                window!!.attributes?.width = d.height
+                                window!!.attributes?.gravity = Gravity.END
+                                tryOn{
+                                    bin.straing.animate().translationX(-d.height.toFloat())
+                                }
+                                setOnDismissListener {
+                                    bin.straing.animate().translationX(0F).scaleX(1F)
+                                }
+                            }
+                        }
+
+                    }
+
+                    override fun show() {
+                        volView.releaseParent()
+                        tryOn{ setContentView(volView) }
+                        setTitle("Volume")
+                        this.setCanceledOnTouchOutside(true)
+                        super.show()
+                    }
+
+                    override fun setupActionBar(actionBar: ActionBar) {
+                        super.setupActionBar(actionBar)
+                        showBackButton(R.drawable.close){
+                            dismiss()
+                        }
+                    }
+
+                    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+                        if(keyCode == KeyEvent.KEYCODE_VOLUME_DOWN){
+                            volumePhone.volumeseek.progress -= 10
+                            return true
+                        }
+                        if(keyCode == KeyEvent.KEYCODE_VOLUME_UP){
+                            volumePhone.volumeseek.progress += 10
+                            return true
+                        }
+                        return super.onKeyDown(keyCode, event)
+                    }
+                }
+            }
+
+
+
+            ADD_DIALOG -> {
+                val title = EditText(this@VideoView)
+                title.hint = getString(R.string.nv)
+                title.setText(this.title)
+                title.setHint(R.string.nvi)
+                title.setSingleLine()
+                title.maxLines = 1
+                title.isSingleLine = true
+                title.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                android.app.AlertDialog.Builder(this)
+                    .setTitle("Add Video")
+                    .setView(title)
+                    .setNegativeButton(android.R.string.cancel,null)
+                    .setPositiveButton(getString(R.string.add)){ _, _->
+                        if(title.text.isNotEmpty()){
+                            db.doing {
+                                it.insert(Video(0, title.text.toString(), video_id))
+                                val n =
+                                    it.listAsList().last()
+                                noteId = n.id
+                                p = it.listAsList().size - 1
+                                Yt.apply {
+                                    pos = p
+                                    link = n.id
+                                }
+                                noted = n
+
+                                this.title = n.title
+                                setTitle(n.title)
+
+                                snackBar("Added")
+
+                                checkStateSave(true)
+                                playlist.clear()
+                                intent.getParcelableArrayExtra("playlist")?.forEach {
+                                    val text : String = when(it){
+                                        is Video -> it.title
+                                        else -> it.toString()
+                                    }
+
+                                    playlist.add(text)
+                                }
+                                playlist.notifyDataSetChanged()
+
+                            }
+                        }
+                        else{
+                            snackBar("The title must not be empty!")
+                        }
+                    }.apply {
+                    }.create()
+            }
+            DEL_DIALOG -> {
+                android.app.AlertDialog.Builder(this)
+                    .setMessage(R.string.del_com)
+                    .setNegativeButton(android.R.string.cancel,null)
+                    .setPositiveButton(getString(R.string.del)){ _, _->
+                        db.doing {
+                            db.deleteVideoByVideoId(video_id)
+
+                        }
+                        snackBar("Video deleted!")
+                        Yt.link = -1
+                        Yt.pos = 1
+                        checkStateSave(false)
+                    }.create()
+            }
+            VF_DIALOG -> {
+                AlertDialog.Builder(this@VideoView).apply {
+                    setTitle(R.string.vefu)
+                    setMessage(R.string.vefume)
+                    setNegativeButton(android.R.string.cancel, null)
+                    setPositiveButton(R.string.enter) { _, _ ->
+                        enterFullscreen(true)
+                    }
+                }.create()
+            }
+
+            else -> Dialog(this)
+        }.apply {
+            show()
+        }
+    }
+
+
+
+
+    private fun setUiState(show:Boolean){
+        if(show) {
+            bin.videoLay.tul.background.mutate().alpha = 255
+
+            try{ actionBar?.show() }catch (_:Exception){}
+        }else {
+            bin.videoLay.tul.background.mutate().alpha = 0
+            try{ actionBar?.show() }catch (_:Exception){}
+        }
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        tryOn{
+            savedInstanceState.apply {
+                now = getFloat("time")
+                noted = getParcelable("item")
+            }
+        }
+    }
+
+
+    fun getPlayBackState(): PlaybackStateCompat{
+
+        return PlaybackStateCompat.Builder()
+            .setState(
+                if (play) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED,
+               now.toLong() * 1000L, 1F
+            )
+            .setActions(PlaybackStateCompat.ACTION_SEEK_TO or PlaybackStateCompat.ACTION_SKIP_TO_NEXT or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or PlaybackStateCompat.ACTION_PLAY_PAUSE)
+            .build()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        newCon = newConfig
+        val v = false
+        if(!v) {
+            if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                if(!resources.getBoolean(R.bool.tablet)) {
+                    enterFullscreen()
+                    setUiState(false)
+                    isInFullscreen = true
+                    isFullscreen = true
+
+                }
+            } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                exitFullscreen()
+                isInFullscreen = false
+                setUiState(true)
+                isFullscreen = false
+            }
+            updateView()
+        }
+        super.onConfigurationChanged(newConfig)
+    }
+
+    private val roundIntent get() = Intent(intent).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP).addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    @SuppressLint("UseLoadingForDrawables")
+    private fun playercontrols(play : Boolean){
+        //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//            ms.setMetadata(
+//                MediaMetadataCompat.Builder()
+//                    .putString(
+//                        MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE,
+//                        noted?.title
+//                    )
+//                    .putBitmap(
+//                        MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON,
+//                        thumb
+//                    ).putRating("android.media.metadata.RATING", RatingCompat.newHeartRating(true))
+//                    .build()
+//            )
+//        }
+        val cI = "10000"
+        val i = Intent(applicationContext, app.wetube.service.ControlReceiver::class.java)
+        val fi = openVideoNTicket(this, noted?:return,p, intent = roundIntent)
+        val a = NotificationCompat.Action(
+            if(!play)R.drawable.play else R.drawable.pause, if (play)getString(R.string.pause) else getString(R.string.play),
+            PendingIntent.getBroadcast(applicationContext, 2, i.putExtra("state", play),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        )
+
+        val f = NotificationCompat.Action(
+            R.drawable.close, getString(R.string.close),
+            PendingIntent.getActivity(applicationContext, 3, fi.putExtra("finish", true),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        )
+        nobu = NotificationCompat.Builder(this, cI)
+            .setSmallIcon(R.drawable.music_play)
+            .setContentTitle(title)
+            .setContentText(title)
+            .setAutoCancel(true)
+            .setStyle(android.support.v4.media.app.NotificationCompat.MediaStyle().setMediaSession(ms.sessionToken))
+            .setLargeIcon(thumb)
+            .setContentIntent(
+                PendingIntent.getActivity(this, 1, roundIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            )
+            .setOngoing(true)
+            .addAction(a)
+            .addAction(f)
+            .setOnlyAlertOnce(true)
+
+        Yt.youTubePlayer = l
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            val c =  NotificationChannel(cI, "Video Control", NotificationManager.IMPORTANCE_DEFAULT)
+            notifMan.createNotificationChannel(c)
+            c.setShowBadge(false)
+            c.description = "Control the played video"
+            nobu.setChannelId(cI)
+        }
+        notifMan.notify(1, nobu.build())
+
+        isnotifexist = true
+    }
+
+    override fun onNavigateUp(): Boolean {
+        finishAndGoToMain()
+        return true
+    }
+
+
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
+        when(item.title){
+
+            getString(R.string.close) -> finishAndRemoveTask()
+        }
+        when(item.itemId){
+            android.R.id.home -> {
+                onNavigateUp()
+            }
+            R.id.thumbnail ->{
+                val d = windowManager.defaultDisplay
+                Glide.with(this@VideoView.baseContext)
+                    .load("https://i.ytimg.com/vi/${video_id}/hqdefault.jpg")
+                    .asBitmap()
+                    .error(R.drawable.unhappy)
+                    .into(object : SimpleTarget<Bitmap>(d.width, d.height) {
+
+                        override fun onResourceReady(
+                            resource: Bitmap?,
+                            glideAnimation: GlideAnimation<in Bitmap>?,
+                        ) {
+                            resource?.let{bitmap->
+                                shareImageandText(bitmap)
+                            }
+
+                        }
+
+                    })
+            }
+            R.id.QC ->{
+                runOnUiThread{
+                    Bundle().apply {
+                        val b = this
+                        putString("txt", video_id)
+                        QRCodePage(this@VideoView, b.getString("txt")!!).apply {
+                            if(!lockPot){
+                                window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                                if (!isFullscreen) {
+                                    window!!.attributes?.height = bin.swipe.height + sbs.navigationBarHeight
+                                    window!!.attributes?.width = bin.swipe.width
+                                    window!!.attributes?.x = bin.swipe.x.toInt()
+                                    window!!.attributes?.gravity = Gravity.BOTTOM
+                                } else {
+                                    val s = Point()
+                                    windowManager.defaultDisplay.getSize(s)
+                                    val d = this@VideoView.windowManager.defaultDisplay
+                                    window!!.attributes?.height =
+                                        ViewGroup.LayoutParams.MATCH_PARENT
+                                    window!!.attributes?.width = d.height
+                                    window!!.attributes?.gravity = Gravity.END
+                                    tryOn{
+                                        bin.straing.animate().translationX(-d.height.toFloat())
+                                    }
+                                    setOnDismissListener {
+                                        bin.straing.animate().translationX(0F).scaleX(1F)
+                                    }
+                                }
+                            }
+                        }.show()
+                    }
+                }
+            }
+
+            R.id.loop -> {
+                val sp = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+                val se = sp.edit()
+                val c =  !sp.getBoolean("loop", false)
+                se.putBoolean("loop", c).apply()
+                isLoop = c.apply {
+                    item.isChecked = this
+                }
+            }
+            R.id.tooslow -> {
+                l.setPlaybackRate(PlaybackRate.RATE_0_25)
+            } R.id.slow -> {
+                l.setPlaybackRate(PlaybackRate.RATE_0_5)
+            }
+            R.id.ns  ->{
+                l.setPlaybackRate(PlaybackRate.RATE_1)
+            }
+            R.id.fast -> {
+                l.setPlaybackRate(PlaybackRate.RATE_1_5)
+            }
+            R.id.toofast -> {
+                l.setPlaybackRate(PlaybackRate.RATE_2)
+            }
+
+            R.id.vidid ->{
+                if (video_id.isNotEmpty()) {
+                    val shareIntent = Intent()
+                    val stxt = "youtube.com/watch?v=${video_id}"
+                    shareIntent.action = Intent.ACTION_SEND
+                    shareIntent.type = "text/plain"
+                    shareIntent.putExtra(Intent.EXTRA_TEXT, stxt);
+                    startActivity(Intent.createChooser(shareIntent, "Share Via"))
+                }
+            }
+            R.id.del_ic -> {
+                val d = db.listAsList().map { it.videoId }
+                if(d.contains(video_id)) {
+                    openDialog(DEL_DIALOG)
+                }else{
+                    openDialog(ADD_DIALOG)
+                }
+            }
+
+            R.id.pip -> pip()
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+
+    fun reloadPref(){
+        val sp = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+        if(!sp.getBoolean("show_video", false)){
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }else{
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+        if(sp.getBoolean("stay", false)){
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }else{
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(sp.getBoolean("keep_unlock", false))
+            setTurnScreenOn(sp.getBoolean("stay", false))
+        }
+        isLoop = sp.getBoolean("loop", false)
+        isNotch = sp.getBoolean("notch", false)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if(isNotch) {
+                window.attributes.layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }else{
+                window.attributes.layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT
+            }
+        }
+    }
+    override fun onResume() {
+        super.onResume()
+        reloadPref()
+        roter.addCallback(MediaRouter.ROUTE_TYPE_LIVE_VIDEO, displeiyTvL)
+        lookThisInTv()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        getAll(intent)
+        if(intent.getBooleanExtra("finish", false)){
+            finishAndRemoveTask()
+        }
+        val st = intent.getStringExtra("state")
+        if(!st.isNullOrEmpty()){
+            if(st == "playing"){
+                l.pause()
+            }else if(st == "not playing"){
+                l.play()
+            }
+            moveTaskToBack(false)
+        }
+    }
+
+    fun getAll(ie:Intent){
+        val item = ie.getParcelableExtra<Parcelable>("vid")
+        if(item !is Video) return
+        if(item.videoId != video_id) {
+            try {
+                p = Yt.pos
+                video_id = item.videoId
+                noted = item
+                l.loadVideo(item.videoId, 0f)
+                title = item.title
+                setTitle(item.title)
+                setTaskDescription(ActivityManager.TaskDescription(item.title))
+                setupThumb
+            } catch (e: Exception) {
+            }
+            noteId = Yt.link
+
+        }
+
+    }
+    /** PIP permission
+     * (Need android oreo)
+    * */
+    private fun hasPermission(): Boolean {
+        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) appOps.checkOpNoThrow(AppOpsManager.OPSTR_PICTURE_IN_PICTURE, android.os.Process.myUid(), packageName) == AppOpsManager.MODE_ALLOWED else false
+    }
+    @SuppressLint("InflateParams", "MissingInflatedId") @Suppress("SetJavaScriptEnabled")
+
+    var plavol = 100
+
+
+    private fun PIPP(): PictureInPictureParams? {
+        val r = Rect()
+        val I =  Intent(applicationContext, ControlReceiver::class.java)
+
+        I.putExtra("state", play)
+        val text = if(play)getString(R.string.pause) else getString(R.string.play)
+            val l = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                listOf(
+                    RemoteAction(Icon.createWithResource(this, R.drawable.play_pause), text, text, PendingIntent.getBroadcast(this, 1, I,PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
+                )
+            else listOf()
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                PictureInPictureParams.Builder()
+                    .setAspectRatio(Rational(16, 9))
+                    .setActions(l)
+                    .build()
+            }
+            else null
+
+        }
+
+
+    @SuppressLint("SuspiciousIndentation")
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        val pipfirst = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("pipnow", false)
+
+        if(pipfirst) {
+            pip()
+        }
+
+    }
+
+    private fun shareImageandText(bitmap: Bitmap) {
+        val uri = getmageToShare(bitmap)
+        val intent = Intent(Intent.ACTION_SEND)
+
+        // putting uri of image to be shared
+        intent.apply{
+            putExtra(Intent.EXTRA_STREAM, uri)
+            // adding text to share
+
+            // Add subject Here
+            putExtra(Intent.EXTRA_SUBJECT, "Subject Here")
+
+            // setting type to image
+            setType("image/png")
+
+        }
+
+        // calling startactivity() to share
+        startActivity(Intent.createChooser(intent, "Share Via"))
+    }
+    private fun getmageToShare(bitmap: Bitmap): Uri? {
+        val imagefolder = File(cacheDir, "images")
+        var uri: Uri? = null
+        try {
+            imagefolder.mkdirs()
+            val file = File(imagefolder, "shared_image.png")
+            val outputStream = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 90, outputStream)
+            outputStream.flush()
+            outputStream.close()
+            uri = FileProvider.getUriForFile(this, "app.wetube.image-share", file)
+        } catch (e: Exception) {
+            Toast.makeText(this, e.message, Toast.LENGTH_LONG).show()
+        }
+        return uri
+    }
+
+    @SuppressLint("CheckResult")
+    override fun onPause() {
+        super.onPause()
+    }
+
+
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        if (isInPictureInPictureMode) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            bin.videoLay.root.visibility = (View.GONE)
+            bin.videoview.layoutParams?.apply{
+                val s= ViewGroup.LayoutParams.MATCH_PARENT
+                height = s
+                width = s
+            }
+            setUiState(false)
+
+        } else {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
+            if (isFullscreen) {
+                //IS Fullscreen
+                enterFullscreen()
+            } else {
+
+                exitFullscreen()
+                exitFullscreen()
+            }
+            // Restore the full-screen UI.
+            bin.videoLay.root.visibility = (View.VISIBLE)
+            setUiState(!isFullscreen)
+
+        }
+        val e = Runnable{
+            stillPip = isInPictureInPictureMode
+        }
+        try{
+            Handler(mainLooper).postDelayed(e, 8000L)
+        }catch (_:Exception){
+            e.run()
+        }
+    }
+
+    override fun getContextAble(): Context? {
+        return this
+    }
+
+    override fun setYPlayer(yt: YouTubePlayer) {
+        l = yt
+    }
+
+    override fun getYPlayer(): YouTubePlayer {
+        return l
+    }
+
+
+}
+
+
+
+
+
+
+

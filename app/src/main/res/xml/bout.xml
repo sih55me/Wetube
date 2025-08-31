@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <Preference android:icon="@mipmap/ic_launcher"
+        android:title="@string/app_name"/>
+    <Preference android:title="@string/versi"
+        android:key="versi"/>
+
+    <Preference android:title="@string/versi_gen"
+        android:key="vergen"/>
+</android.preference.PreferenceScreen>

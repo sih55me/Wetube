@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:orientation="vertical"
+    android:background="?android:attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:id="@+id/item"
+        android:gravity="center"
+        android:layout_height="48dp">
+        <ImageView
+            android:id="@+id/menuIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:layout_marginStart="16dp"
+            android:src="@drawable/dedo" />
+
+        <TextView
+            android:id="@+id/menuTitle"
+            style="@android:style/TextAppearance.Material.Medium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="65dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginRight="16dp"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:text="Menu" />
+
+        <Switch
+            android:layout_width="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="10dp"
+            android:id="@+id/check"
+            android:visibility="gone"
+            android:layout_height="wrap_content"/>
+
+        <ImageButton
+            android:layout_width="50dp"
+            android:layout_marginEnd="10dp"
+            android:id="@+id/more"
+            style="?android:borderlessButtonStyle"
+            android:visibility="gone"
+            android:layout_gravity="end|center_vertical"
+            android:src="@drawable/arrow_drop"
+            android:layout_height="wrap_content"/>
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:id="@+id/viewAction"
+        android:visibility="gone"
+        android:layout_height="190dp">
+
+    </FrameLayout>
+
+
+</LinearLayout>

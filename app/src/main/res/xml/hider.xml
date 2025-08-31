@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceScreen
+        android:fragment="app.wetube.page.SettingsPage"
+        android:icon="@drawable/settings"
+        android:title="@string/general" />
+    <PreferenceScreen
+        android:fragment="app.wetube.set.PasswordSet"
+        android:icon="@drawable/password"
+        android:summary="Use to save and change the behaviour"
+        android:title="@string/title_activity_pass" />
+    <PreferenceScreen
+        android:fragment="app.wetube.page.VideoSettings"
+        android:icon="@drawable/video"
+        android:summary="Use to customize behaviour"
+        android:title="Video" />
+    <PreferenceScreen
+        android:fragment="app.wetube.Feedback"
+        android:icon="@drawable/live_chat"
+        android:title="Feedback" />
+    <PreferenceScreen
+        android:fragment="app.wetube.page.Bout"
+        android:icon="@drawable/info"
+        android:title="@string/about" />
+</PreferenceScreen>

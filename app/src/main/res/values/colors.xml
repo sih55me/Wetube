@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="light_blue_600">#FF039BE5</color>
+    <color name="light_blue_900">#FF01579B</color>
+    <color name="light_blue_A200">#FF40C4FF</color>
+    <color name="light_blue_A400">#FF00B0FF</color>
+    <color name="bg_light">#FFF9EC</color>
+    <color name="bg_dark">#1E1307</color>
+    <color name="black_overlay">#66000000</color>
+    <color name="drop_down_background">#A8A8A8</color>
+    <color name="red">#EF0D0D</color>
+    <color name="blue">#1A6BCF</color>
+    <color name="navbarColor">#FFFFF4DB</color>
+    <color name="light_blue_50">#FFE1F5FE</color>
+    <color name="light_blue_200">#FF81D4FA</color>
+    <color name="video_color">#46000000</color>
+    <color name="appbarcolor">#feffff</color>
+    <color name="statusbarcolor">#eff0f2</color>
+    <color name="background">@android:color/white</color>
+    <color name="card_back">#3d3d3d</color>
+    <color name="light_blue_400">#FF29B6F6</color>
+    <color name="gray_400">#FFBDBDBD</color>
+    <color name="gray_600">#FF757575</color>
+    <color name="background_gradient_start">#000000</color>
+    <color name="background_gradient_end">#DDDDDD</color>
+    <color name="fastlane_background">#0096a6</color>
+    <color name="search_opaque">#ffaa3f</color>
+    <color name="selected_background">#ffaa3f</color>
+    <color name="default_background">#3d3d3d</color>
+</resources>

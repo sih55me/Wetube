@@ -1,0 +1,63 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="AppCompatResource">
+    <item
+        android:id="@+id/sharebtn"
+        android:icon="?android:attr/actionModeShareDrawable"
+        android:showAsAction="always"
+        android:title="@string/share">
+        <menu>
+            <item android:title="QRCode"
+                android:id="@+id/qr"/>
+            <item
+                android:id="@+id/shareUrl"
+                android:title="URL" />
+            <item
+                android:id="@+id/shareThum"
+                android:title="Thumbnail" />
+
+            <item
+                android:id="@+id/shareA"
+                android:title="Anything" />
+            <item
+                android:id="@+id/copy"
+                android:title="@android:string/copyUrl" />
+        </menu>
+    </item>
+    <item
+        android:id="@+id/addbtn"
+        android:icon="@drawable/add"
+        android:title="@string/add"
+        android:showAsAction="always" />
+    <item android:title="Channel">
+        <menu>
+            <item
+                android:id="@+id/add_ch"
+                android:title="@string/add" />
+            <item
+                android:id="@+id/abc"
+                android:title="@string/open" />
+            <item
+                android:id="@+id/copyCI"
+                android:title="Link channel" />
+            <item
+                android:id="@+id/copyCIU"
+                android:title="@android:string/copyUrl" />
+        </menu>
+    </item>
+
+
+    <item
+        android:id="@+id/info"
+        android:icon="@drawable/more_info"
+        android:title="Look Descriction"
+        android:visible="true" />
+    <item
+        android:id="@+id/floating"
+        android:title="Floating" />
+    <item
+        android:title="@string/select"
+        android:id="@+id/sel"/>
+
+</menu>

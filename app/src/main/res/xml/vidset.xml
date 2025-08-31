@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/vidtwe">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="loop"
+            android:icon="@drawable/loop"
+            android:title="Loop" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="notch"
+            android:icon="@drawable/notch"
+            android:title="Show notch"
+            android:summary="support android 9 or newer" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="show_video"
+            android:icon="@drawable/visibility"
+            android:summaryOff="Hide video when outside of app"
+            android:summaryOn="Keep showing video when outside of app"
+            android:title="Show video" />
+
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="stay"
+            android:icon="@drawable/visibility"
+            android:title="Keep Screen ON" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="allow_an"
+            android:icon="@drawable/open_in_new"
+            android:title="Opening animation" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pipnow"
+            android:icon="@drawable/home"
+            android:title="PIP when press home button" />
+
+
+        <app.wetube.preference.NumberPickerPreference
+            android:defaultValue="10"
+            android:dialogTitle="Fast seek for...(sec)"
+            android:icon="@drawable/fast_rewind"
+            android:key="skipdu"
+            android:max="20"
+            android:positiveButtonText="Set"
+            android:title="Fast seek duraction" />
+    </PreferenceCategory>
+</PreferenceScreen>

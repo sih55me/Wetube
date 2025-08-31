@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <item
+        android:id="@+id/filter"
+        android:icon="@drawable/filter"
+        android:orderInCategory="3"
+        android:showAsAction="always"
+        android:title="@string/order"
+        android:visible="false" />
+    <item
+        android:id="@+id/app_bar_search"
+        android:icon="@drawable/search"
+        android:orderInCategory="2"
+        android:showAsAction="always"
+        android:alphabeticShortcut=" "
+        android:alphabeticModifiers="CTRL"
+        android:title="@android:string/search_go"
+        tools:ignore="AppCompatResource" />
+
+    <item
+        android:id="@+id/manage"
+        android:icon="@drawable/arrows_outward"
+        android:orderInCategory="2"
+        android:title="Manage page"
+        android:showAsAction="always"
+        android:visible="false"
+        tools:ignore="AppCompatResource" />
+
+    <item
+        android:id="@+id/reskey"
+        android:icon="@drawable/reset_settings"
+        android:orderInCategory="2"
+        android:title="Go back to first page"
+        android:visible="false" />
+
+    <item
+        android:id="@+id/channelId"
+        android:icon="@drawable/profile"
+        android:orderInCategory="2"
+        android:title="Channel id" />
+
+    <item
+        android:id="@+id/del"
+        android:icon="@drawable/delete"
+        android:orderInCategory="2"
+        android:alphabeticShortcut="d"
+        android:alphabeticModifiers="CTRL"
+        android:title="Delete result"
+        android:visible="false" />
+
+
+    <item
+        android:id="@+id/nexkey"
+        android:icon="@drawable/next_arrow"
+        android:alphabeticShortcut="n"
+        android:alphabeticModifiers="ALT"
+        android:orderInCategory="3"
+        android:title="Next Page"
+        android:visible="false" />
+    <item
+        android:id="@+id/cusSea"
+        android:icon="@drawable/go"
+        android:orderInCategory="2"
+        android:alphabeticShortcut=" "
+        android:alphabeticModifiers="CTRL|ALT"
+        android:title="Custom Search" />
+</menu>

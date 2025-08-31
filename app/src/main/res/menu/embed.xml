@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/speed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/speed"
+        android:title="@string/speed" >
+        <menu>
+            <item
+                android:id="@+id/tooslow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:title="0.25" />
+            <item
+                android:id="@+id/slow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:title="0.5" />
+            <item
+                android:id="@+id/ns"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:title="1" />
+            <item
+                android:id="@+id/fast"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:title="1.5" />
+            <item
+                android:id="@+id/toofast"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:title="2" />
+        </menu>
+    </item>
+    <item
+        android:title="Loop"
+        android:id="@+id/loop"
+        android:icon="@drawable/loop"
+        android:checkable="true"
+        />
+    <item
+        android:id="@+id/shorset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:icon="@drawable/settings"
+        android:showAsAction="never"
+        android:title="@string/set" />
+</menu>

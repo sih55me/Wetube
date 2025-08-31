@@ -1,0 +1,10 @@
+<resources>
+    <dimen name="fab_margin">48dp</dimen>
+    <dimen name="text_margin">48dp</dimen>
+    <dimen name="fragment_horizontal_margin">48dp</dimen>
+    <dimen name="item_transform_image_length">142dp</dimen>
+    <dimen name="activity_horizontal_margin">48dp</dimen>
+    <dimen name="marginLayout">70dp</dimen>
+    <dimen name="marginContent">100dp</dimen>
+    <dimen name="marginSearchBar">120dp</dimen>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Wetube.Sy" parent="Wetube.Sy.D" />
+
+    <style name="Sy" parent="android:Theme.DeviceDefault" />
+
+    <style name="Wetube.Sy.Dialog" parent="Wetube.Sy.Dialog.D" />
+
+    <style name="Wetube.Sy.O" parent="Wetube.Sy.D.O" />
+
+</resources>

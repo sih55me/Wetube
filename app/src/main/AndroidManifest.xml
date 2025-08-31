@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.DETECT_SCREEN_CAPTURE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <queries>
+        <package android:name="com.instagram.android" />
+        <package android:name="com.twitter.android" />
+        <package android:name="com.snapchat.android" />
+        <package android:name="org.telegram.messenger" />
+        <package android:name="com.facebook.katana" />
+        <package android:name="com.facebook.orca" />
+        <package android:name="om.google.android.gm" />
+        <package android:name="com.google.android.apps.docs" />
+        <package android:name="com.google.android.apps.photos" />
+        <package android:name="com.google.android.apps.dynamite" />
+        <package android:name="com.google.android.apps.messaging" />
+        <package android:name="com.whatsapp" />
+        <package android:name="org.thunderdog.challegram" />
+        <package android:name="com.discord" />
+        <package android:name="com.google.android.keep" />
+        <package android:name="com.google.android.gm" />
+        <package android:name="com.microsoft.office.outlook" />
+        <package android:name="com.google.android.apps.classroom" />
+        <package android:name="com.example.savefromNew" />
+        <package android:name="com.google.android.googlequicksearchbox" />
+
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".SupaContainer"
+        android:allowBackup="true"
+        android:appCategory="video"
+        android:description="@string/library"
+        android:enableOnBackInvokedCallback="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:process="app.wetube"
+        android:resizeableActivity="true"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="true"
+        tools:ignore="UnusedAttribute">
+
+
+        <activity
+            android:name=".set.Settings"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:documentLaunchMode="never"
+            android:label="@string/title_activity_settings"
+            tools:ignore="ExportedPreferenceActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
+            </intent-filter>
+        </activity>
+
+
+
+
+
+        <activity
+            android:name=".ChannelInfo"
+            android:exported="false"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:autoRemoveFromRecents="true"
+            android:documentLaunchMode="always"
+            android:label="@string/title_activity_channel_info" />
+
+        <activity
+            android:name=".ContentBrow"
+            android:exported="false" />
+
+
+        <activity
+            android:name=".MenuActivity"
+            android:exported="true" />
+        <activity
+            android:name=".ActivityDialog"
+            android:exported="true"
+            android:theme="@android:style/Theme.DeviceDefault.Dialog" />
+
+        <activity android:name=".RIP"
+            android:autoRemoveFromRecents="true"
+            android:documentLaunchMode="always"
+            android:clearTaskOnLaunch="true"
+            android:exported="false"/>
+        <activity
+            android:name=".MainActivity"
+            android:banner="@mipmap/ic_launcher"
+            android:exported="true"
+            android:allowEmbedded="true"
+            android:allowUntrustedActivityEmbedding="true"
+            android:windowSoftInputMode="adjustResize|stateVisible"
+            android:label="@string/app_name"
+            android:logo="@mipmap/ic_launcher"
+            android:launchMode="singleTop"
+            android:resizeableActivity="true"
+            tools:ignore="RedundantLabel">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service android:name=".service.FloatVideo" />
+
+
+
+
+
+        <activity
+            android:name=".Browser"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:exported="true"
+            android:immersive="true"/>
+
+
+
+        <receiver
+            android:name=".service.ControlReceiver"
+            android:enabled="true" />
+
+        <service android:name=".service.VideoService" />
+
+        <activity-alias
+            android:name=".AddVid"
+            android:exported="true"
+            android:label="@string/add"
+            android:icon="@mipmap/ic_launcher_add"
+            android:targetActivity=".MainActivity">
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity
+            android:name=".VideoView"
+            android:exported="false"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+            android:allowEmbedded="true"
+            android:documentLaunchMode="intoExisting"
+            android:resizeableActivity="true"
+            android:label="@string/title_activity_video"
+            android:autoRemoveFromRecents="true"
+            android:launchMode="singleTop"
+            android:supportsPictureInPicture="true"
+            tools:ignore="DiscouragedApi" />
+        <activity
+            android:name=".secret.Intro"
+            android:exported="true"
+            android:launchMode="singleTop" />
+
+        <activity
+            android:name=".set.RVSet"
+            android:exported="true"
+
+            android:launchMode="singleTop"
+            tools:ignore="ExportedPreferenceActivity" />
+
+        <service
+            android:name=".service.RandomVids"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_add"
+
+            android:roundIcon="@mipmap/ic_launcher_add"
+            android:banner="@drawable/video"
+            android:logo="@drawable/default_background"
+            android:description="@string/rv_desc"
+            android:label="Some Random Video"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="android.service.dream"
+                android:resource="@xml/my_dream" />
+
+        </service>
+
+        <service
+            android:name=".service.RandomQS"
+            android:exported="true"
+            android:label="@string/random_qs"
+            android:icon="@drawable/shuffle"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            tools:targetApi="24">
+        <intent-filter>
+            <action android:name="android.service.quicksettings.action.QS_TILE" />
+        </intent-filter>
+    </service>
+
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="app.wetube.image-share"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/fileprovider" />
+        </provider>
+    </application>
+
+</manifest>

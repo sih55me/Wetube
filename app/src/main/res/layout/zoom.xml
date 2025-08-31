@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:layout_width="match_parent"
+        android:text="Scale X"
+        android:paddingStart="10dp"
+        android:layout_height="wrap_content"/>
+    <ZoomControls
+        android:layout_width="match_parent"
+        android:id="@+id/x"
+        android:layout_height="wrap_content"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:text="Scale X"
+        android:paddingStart="10dp"
+        android:layout_height="wrap_content"/>
+    <ZoomControls
+        android:layout_width="match_parent"
+        android:id="@+id/y"
+        android:layout_height="wrap_content"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:text="Scale X &amp; Y"
+        android:paddingStart="10dp"
+        android:layout_height="wrap_content"/>
+    <ZoomControls
+        android:layout_width="match_parent"
+        android:id="@+id/xy"
+        android:layout_height="wrap_content"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider" />
+
+    <CheckedTextView
+        android:layout_width="match_parent"
+        android:text="Position x - positive"
+        android:checked="true"
+        android:gravity="center_vertical"
+        style="?android:textAppearanceSmall"
+        android:checkMark="?android:listChoiceIndicatorMultiple"
+        android:paddingStart="10dp"
+        android:layout_height="wrap_content"/>
+    <SeekBar
+        android:layout_width="match_parent"
+        android:id="@+id/px"
+        android:minHeight="40dp"
+        android:layout_height="wrap_content"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?android:attr/listDivider" />
+
+    <CheckedTextView
+        android:layout_width="match_parent"
+        android:text="Position y - positive"
+        android:checked="true"
+        android:gravity="center_vertical"
+        style="?android:textAppearanceSmall"
+        android:checkMark="?android:listChoiceIndicatorMultiple"
+        android:paddingStart="10dp"
+        android:layout_height="wrap_content"/>
+    <SeekBar
+        android:layout_width="match_parent"
+        android:id="@+id/py"
+        android:minHeight="40dp"
+        android:layout_height="wrap_content"/>
+
+</LinearLayout>

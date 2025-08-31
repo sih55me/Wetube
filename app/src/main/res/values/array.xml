@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="darkType">
+        <item>@string/light</item>
+        <item>@string/dark</item>
+        <item>Auto</item>
+    </string-array>
+    <string-array name="darkTypeVal">
+        <item>l</item>
+        <item>d</item>
+        <item>a</item>
+    </string-array>
+    <string-array name="labvisType">
+        <item>Show Label</item>
+        <item>Show Label when selected</item>
+        <item>Hide Label</item>
+    </string-array>
+    <string-array name="labvisTypeVal">
+        <item>sl</item>
+        <item>sls</item>
+        <item>hl</item>
+    </string-array>
+</resources>

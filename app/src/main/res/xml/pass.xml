@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:icon="@drawable/password"
+        android:imeOptions="flagNoExtractUi"
+        android:inputType="textPassword"
+        android:key="password"
+        android:title="Password" />
+
+    <PreferenceCategory
+        android:title="@string/options">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="needOnAdd"
+            android:icon="@drawable/add"
+            android:title="Do it on add" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="needOnDelete"
+            android:icon="@drawable/delete"
+            android:title="Do it on delete" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="needOnLogin"
+            android:icon="@drawable/forward"
+            android:title="Do it on login" />
+
+        <Preference
+            android:title="Turn off"
+            android:icon="@drawable/reset_settings"
+            android:key="off"/>
+    </PreferenceCategory>
+
+
+
+
+</PreferenceScreen>

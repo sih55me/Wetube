@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/tooslow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="0.25" />
+    <item
+        android:id="@+id/slow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="0.5" />
+    <item
+        android:id="@+id/ns"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="1" />
+    <item
+        android:id="@+id/fast"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="1.5" />
+    <item
+        android:id="@+id/toofast"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="2" />
+</menu>

@@ -1,0 +1,48 @@
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+
+    tools:ignore="AppCompatResource">
+    <item
+        android:id="@+id/sharebtn"
+        android:icon="?android:attr/actionModeShareDrawable"
+        android:showAsAction="always"
+        android:title="@string/share">
+        <menu>
+            <item
+                android:id="@+id/shareUrl"
+                android:title="URL" />
+            <item
+                android:id="@+id/shareThum"
+                android:title="Thumbnail" />
+
+            <item
+                android:id="@+id/shareA"
+                android:title="Anything" />
+            <item
+                android:id="@+id/editbtn"
+                android:title="QRCode" />
+            <item
+                android:id="@+id/copy"
+                android:title="@android:string/copyUrl" />
+        </menu>
+    </item>
+    <item
+        android:id="@+id/delbtn"
+        android:icon="@drawable/delete"
+        android:title="@string/del"
+        android:showAsAction="always" />
+    <item
+        android:id="@+id/editvid"
+        android:icon="@drawable/edit"
+        android:title="Edit"
+        android:visible="true"
+        android:showAsAction="always" />
+    <item
+        android:title="@string/select"
+        android:id="@+id/sel"/>
+    <item
+        android:id="@+id/floating"
+        android:title="Floating" />
+
+
+</menu>

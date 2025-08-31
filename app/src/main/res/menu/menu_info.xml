@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/loop"
+        android:checkable="true"
+        android:checked="false"
+        android:icon="@drawable/loop"
+        android:title="Loop"
+        android:titleCondensed="Off"
+        android:visible="true" />
+    <item
+        android:id="@+id/pip"
+        android:title="PIP" />
+    <item
+        android:icon="@drawable/speed"
+        android:showAsAction="ifRoom"
+        android:title="@string/speed">
+    </item>
+
+    <item
+        android:id="@+id/livechat_ic"
+        android:icon="@drawable/live_chat"
+        android:title="Live Chat"
+        android:visible="true"
+        android:showAsAction="always" />
+
+    <item
+        android:id="@+id/shorset"
+        android:icon="@drawable/settings"
+        android:title="@string/set"
+        android:visible="true" />
+    <item
+        android:id="@+id/del_ic"
+        android:icon="@drawable/add"
+        android:title="@string/add"
+        android:visible="true"
+        android:showAsAction="always" />
+    <item
+        android:id="@+id/share_ic"
+        android:icon="@drawable/share"
+        android:title="@string/share"
+        android:titleCondensed="Share Thumbnail"
+        android:visible="true"
+        android:showAsAction="always" />
+
+</menu>

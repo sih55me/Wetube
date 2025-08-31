@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:id="@+id/toolbar3"
+        android:layout_width="match_parent"
+        android:gravity="center_vertical"
+        android:layout_height="50dp"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:id="@+id/close"
+            style="?android:attr/borderlessButtonStyle"
+            android:src="?android:attr/homeAsUpIndicator"/>
+
+        <TextView
+            android:id="@+id/textView5"
+            style="@android:style/TextAppearance.DeviceDefault.DialogWindowTitle"
+            android:layout_marginLeft="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Favorite Channel" />
+
+
+    </LinearLayout>
+
+    <ListView
+        android:layout_width="match_parent"
+        android:id="@+id/list"
+        android:layout_marginLeft="@dimen/marginContent"
+        android:layout_marginRight="@dimen/marginContent"
+        android:layout_marginTop="50dp"
+        android:layout_height="wrap_content"/>
+</FrameLayout>
