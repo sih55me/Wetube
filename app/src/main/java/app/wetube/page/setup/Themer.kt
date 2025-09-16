@@ -1,11 +1,13 @@
 package app.wetube.page.setup
 
 import android.app.Fragment
+import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import app.wetube.R
@@ -26,7 +28,9 @@ class Themer:Fragment() {
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val p = PreferenceManager.getDefaultSharedPreferences(activity!!.applicationContext)
         bin.apply {
+
             togthe.setOnCheckedChangeListener { buttonView, isChecked ->
                 val result = if(isChecked)"w" else "d"
                 PreferenceManager.getDefaultSharedPreferences(activity!!.applicationContext).edit().putString("theme", result).apply()
@@ -51,8 +55,10 @@ class Themer:Fragment() {
                         position: Int,
                         id: Long,
                     ) {
-                        PreferenceManager.getDefaultSharedPreferences(activity!!.applicationContext).edit().putString("darkmode", listV[position]).apply()
-
+                        val v = listV[position]
+                        if(p.getString("darkmode", v) != v) {
+                            p.edit().putString("darkmode", v).apply()
+                        }
                     }
 
                     override fun onNothingSelected(parent: AdapterView<*>?) {

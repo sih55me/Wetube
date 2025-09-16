@@ -113,7 +113,10 @@
             android:icon="@drawable/play">
             <intent
                 android:targetClass="app.wetube.secret.Intro"
-                android:targetPackage="app.wetube"/>
+                android:targetPackage="app.wetube">
+                <extra android:name="again" android:value="true"/>
+            </intent>
+
         </Preference>
         <Preference
             android:title="Restart app"

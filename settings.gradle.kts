@@ -1,4 +1,4 @@
-include(":common", ":app", ":library", ":ffmpeg", ":aria2c", "frag-nav")
+include(":app")
 
 pluginManagement {
     repositories {
@@ -12,6 +12,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+
+        maven("https://maven.mozilla.org/maven2/")
+
         maven(uri("https://jitpack.io"))
         jcenter()
         maven (uri("https://plugins.gradle.org/m2/") )

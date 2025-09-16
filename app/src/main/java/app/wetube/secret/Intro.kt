@@ -3,23 +3,27 @@ package app.wetube.secret
 import android.app.Activity
 import android.app.Fragment
 import android.app.FragmentTransaction
-import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
+import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.os.Message
 import android.preference.PreferenceManager
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.view.Window
-import android.widget.FrameLayout
+import android.view.WindowInsets
+import android.view.WindowManager
 import android.window.BackEvent
 import android.window.OnBackAnimationCallback
 import android.window.OnBackInvokedCallback
 import app.wetube.MainActivity
 import app.wetube.R
-import app.wetube.page.NothingDI
+import app.wetube.TranslucentHelper
+import app.wetube.core.isTablet
+import app.wetube.core.setupTheme
+import app.wetube.databinding.OnboardBinding
 import app.wetube.page.setup.DummyInfo
 import app.wetube.page.setup.Themer
 
@@ -31,14 +35,20 @@ class Intro : Activity() {
     private val tagIntent = Intent().apply {
         putExtra("intro",true)
     }
+    val bin by lazy { OnboardBinding.inflate(layoutInflater) }
+    val cuspref get()  = getSharedPreferences("cuspref", MODE_PRIVATE)
+    val cpc get() = cuspref.edit()
+
+    val t by lazy{ TranslucentHelper(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
         val pm = baseContext.packageManager
-        val cuspref = getSharedPreferences("cuspref", MODE_PRIVATE)
-        val cpc = cuspref.edit()
-        val con = FrameLayout(this).apply {
-            id = R.id.content
-        }
+        t.setTranslucentStatus(true)
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
         if (pm.hasSystemFeature("android.software.leanback")) {
             val p = PreferenceManager.getDefaultSharedPreferences(this).edit()
             cpc.putBoolean("first", false)
@@ -46,92 +56,129 @@ class Intro : Activity() {
             p.putBoolean("tv", true)
             p.apply()
             finish()
-            startActivity(Intent(this, MainActivity::class.java))
         }
         //to check if is from intro
-
-        try {
-            val ac = Class.forName("com.android.internal.app.AlertController")
-            val c = ac.getDeclaredConstructor(
-                Context::class.java,
-                DialogInterface::class.java,
-                Window::class.java
-            )
-            c.isAccessible = true
-            acon = c.newInstance(this@Intro, NothingDI(), window)
-            val sv = acon.javaClass.getMethod("setView", View::class.java)
-            sv.isAccessible = true
-            sv.invoke(acon, con)
-            val sBN = acon.javaClass.getMethod(
-                "setButton",
-                Int::class.javaPrimitiveType,
-                CharSequence::class.java,
-                DialogInterface.OnClickListener::class.java,
-                Message::class.java
-            )
-            sBN.isAccessible = true
-            sBN.invoke(
-                acon,
-                DialogInterface.BUTTON_POSITIVE,
-                getString(R.string.next),
-                DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
-                    if (pg != 3) {
-                        pg += 1
-                        go()
-                    } else {
-
-                        intent.getBundleExtra("bun")?.let {
-                            val i = it.getBinder("lil")
-                            if (i is MainActivity.LilInstance){
-                                i.restart()
-                            }
-                        }
-                        cpc.putBoolean("first", false)
-                        cpc.apply()
-                        setResult(RESULT_OK, tagIntent)
-                        finish()
-                    }
-                },
-                null
-            )
-            val sBP = acon.javaClass.getMethod(
-                "setButton",
-                Int::class.javaPrimitiveType,
-                CharSequence::class.java,
-                DialogInterface.OnClickListener::class.java,
-                Message::class.java
-            )
-            sBP.isAccessible = true
-            sBP.invoke(
-                acon,
-                DialogInterface.BUTTON_NEGATIVE,
-                getString(R.string.prev),
-                DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
-                    if (pg >= 1) {
-                        pg -= 1
-                        go()
-                    } else {
-                        setResult(RESULT_CANCELED, tagIntent)
-                        finish()
-                    }
-                },
-                null
-            )
-            val install = acon.javaClass.getMethod("installContent")
-            install.isAccessible = true
-            install.invoke(acon)
-        } catch (e: Exception) {
-            setContentView(con)
-            e.printStackTrace()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            }else{
+                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
+        setContentView(bin.root)
+        bin.prev.setOnClickListener {
+            slide(0)
         }
 
+        bin.next.setOnClickListener {
+            slide(1)
+        }
         if(savedInstanceState != null){
             pg = savedInstanceState.getInt("pg")
+            bin.progress.progress = savedInstanceState.getInt("pg")
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            bin.root.setOnApplyWindowInsetsListener { v, insets ->
+                var lu = WindowInsets.Type.navigationBars()
+                if((resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) and !isTablet){
+                    lu = lu or WindowInsets.Type.displayCutout()
+                }
+                val s = insets.getInsets(lu)
+                bin.prev.layoutParams.let {
+                    if(it is ViewGroup.MarginLayoutParams){
+                        it.leftMargin = s.left
+                        it.bottomMargin = s.bottom
+                    }
+                }
+                bin.next.layoutParams.let {
+                    if(it is ViewGroup.MarginLayoutParams){
+                        it.rightMargin = s.right
+                        it.bottomMargin = s.bottom
+                    }
+                }
+                bin.content.layoutParams.let {
+                    if(it is ViewGroup.MarginLayoutParams){
+                        it.rightMargin = s.right
+                        it.leftMargin = s.left
+                    }
+                }
+                WindowInsets.CONSUMED
+            }
+
+        }else{
+            if(t.hasNavBar){
+                if (t.isNavigationAtBottom) {
+                    bin.prev.layoutParams.let {
+                        if(it is ViewGroup.MarginLayoutParams){
+                            it.bottomMargin = t.navigationBarHeight
+                        }
+                    }
+                    bin.next.layoutParams.let {
+                        if(it is ViewGroup.MarginLayoutParams){
+                            it.bottomMargin = t.navigationBarHeight
+                        }
+                    }
+                } else {
+                    bin.prev.layoutParams.let {
+                        if(it is ViewGroup.MarginLayoutParams){
+                            it.leftMargin = t.navigationBarHeight
+                        }
+                    }
+                    bin.content.layoutParams.let {
+                        if(it is ViewGroup.MarginLayoutParams){
+                            it.leftMargin = t.navigationBarHeight
+                            it.rightMargin = t.navigationBarHeight
+                        }
+                    }
+                    bin.next.layoutParams.let {
+                        if(it is ViewGroup.MarginLayoutParams){
+                            it.rightMargin = t.navigationBarHeight
+                        }
+                    }
+                }
+            }
         }
         go()
-        isImmersive = false
-        super.onCreate(savedInstanceState)
+        modifyButton()
 
+    }
+
+    fun modifyButton(){
+        if(pg == 3){
+            bin.next.setText(android.R.string.ok)
+        }else{
+            bin.next.setText(R.string.next)
+        }
+        if(pg == 0){
+            bin.prev.setText(R.string.exit)
+        }else{
+            bin.prev.setText(R.string.prev)
+        }
+        setTitle("${pg + 1} / 4")
+    }
+
+    fun slide(flag:Int){
+        if(flag == 1){
+            if (pg != 3) {
+                pg += 1
+                go()
+
+            } else {
+                setResult(RESULT_OK, tagIntent)
+                finish()
+            }
+        }
+        else if(flag == 0){
+            if (pg >= 1) {
+                pg -= 1
+                go()
+            } else {
+                setResult(RESULT_CANCELED, tagIntent)
+                finish()
+            }
+        }
+        bin.progress.progress = pg
+        modifyButton()
     }
 
 
@@ -185,8 +232,7 @@ class Intro : Activity() {
 
 
     override fun onBackPressed() {
-        setResult(RESULT_CANCELED, tagIntent)
-        finish()
+        slide(0)
     }
 
 

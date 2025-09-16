@@ -128,62 +128,7 @@
 
         </FrameLayout>
 
-        <ImageButton
-            android:id="@+id/pausePlay"
-            android:layout_width="50dp"
-            android:background="@drawable/button"
-            android:layout_marginBottom="30dp"
-            android:layout_marginStart="10dp"
-            android:layout_height="50dp"
-            android:pointerIcon="hand"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentBottom="true"
-            android:contentDescription="@string/play"
-            android:src="@drawable/play"
-            android:tint="@color/white"
-            android:visibility="visible" />
 
-
-        <android.widget.SeekBar
-            android:id="@+id/seekbar_stock"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="10dp" />
-
-        <ImageButton
-            android:id="@+id/playlist_btn"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@drawable/button"
-            android:layout_marginBottom="30dp"
-            android:layout_marginEnd="5dp"
-            android:pointerIcon="hand"
-            android:layout_toStartOf="@id/toggleFullScreen"
-            android:layout_alignParentBottom="true"
-            android:src="@drawable/playlist_play"
-            android:tint="@color/white"
-            android:visibility="gone"
-            android:contentDescription="Playlist"
-            android:tooltipText="Playlist"
-            tools:ignore="SpeakableTextPresentCheck,UnusedAttribute" />
-
-
-        <ImageButton
-            android:id="@+id/toggleFullScreen"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@drawable/button"
-            android:layout_marginBottom="30dp"
-            android:layout_marginEnd="10dp"
-            android:pointerIcon="hand"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="true"
-            android:contentDescription="@string/fullscreen"
-            android:src="@drawable/fullscreen"
-            android:tint="@color/white"
-            android:tooltipText="@string/fullscreen"
-            tools:ignore="SpeakableTextPresentCheck,UnusedAttribute" />
 
 
         <ProgressBar
@@ -199,6 +144,8 @@
             android:id="@+id/tul"
             android:layout_width="match_parent"
             android:background="@drawable/actionbar_trans"
+            android:titleTextAppearance="?android:textAppearanceMedium"
+            android:subtitleTextAppearance="?android:textAppearanceSmall"
             android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
             android:layout_height="?android:actionBarSize">
 
@@ -207,27 +154,81 @@
 
 
 
-        <TextView
-            android:id="@+id/duraction"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_toEndOf="@id/pausePlay"
-            android:layout_marginStart="5dp"
-            android:layout_marginBottom="40dp"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
-            android:gravity="center_vertical"
-            android:background="@drawable/popup"
-            android:shadowColor="@color/black"
-            android:shadowDx="1"
-            android:textSize="15sp"
-            android:shadowDy="1"
-            android:shadowRadius="0.01"
-            android:text="0:00 / 0:00"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold" />
 
+
+        <RelativeLayout
+            android:id="@+id/bottom"
+            android:background="@drawable/bottom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true">
+
+            <ImageButton
+                android:id="@+id/pausePlay"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_alignParentStart="true"
+                android:layout_marginStart="10dp"
+                android:backgroundTint="#3A000000"
+                android:contentDescription="@string/play"
+                android:pointerIcon="hand"
+                android:src="@drawable/play"
+                android:tint="@color/white"
+                android:visibility="visible" />
+
+
+            <android.widget.SeekBar
+                android:id="@+id/seekbar_stock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_below="@id/pausePlay"/>
+
+            <ImageButton
+                android:id="@+id/playlist_btn"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_toStartOf="@id/toggleFullScreen"
+                android:backgroundTint="#3A000000"
+                android:contentDescription="Playlist"
+                android:pointerIcon="hand"
+                android:src="@drawable/playlist_play"
+                android:tint="@color/white"
+                android:tooltipText="Playlist"
+                android:visibility="gone"
+                tools:ignore="SpeakableTextPresentCheck,UnusedAttribute" />
+
+
+            <ImageButton
+                android:id="@+id/toggleFullScreen"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="10dp"
+                android:backgroundTint="#3A000000"
+                android:contentDescription="@string/fullscreen"
+                android:pointerIcon="hand"
+                android:src="@drawable/fullscreen"
+                android:tint="@color/white"
+                android:tooltipText="@string/fullscreen"
+                tools:ignore="SpeakableTextPresentCheck,UnusedAttribute" />
+            <TextView
+                android:id="@+id/duraction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/pausePlay"
+                android:layout_marginTop="15dp"
+                android:paddingRight="10dp"
+                android:paddingLeft="10dp"
+                android:shadowColor="@color/black"
+                android:shadowDx="1"
+                android:textSize="15sp"
+                android:shadowDy="1"
+                android:shadowRadius="0.01"
+                android:text="0:00 / 0:00"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+        </RelativeLayout>
 
     </RelativeLayout>
 

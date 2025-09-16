@@ -60,23 +60,6 @@ class Settings : PreferenceActivity()  {
 
     }
 
-    override fun startWithFragment(
-        fragmentName: String?,
-        args: Bundle?,
-        resultTo: Fragment?,
-        resultRequestCode: Int,
-        titleRes: Int,
-        shortTitleRes: Int
-    ) {
-        super.startWithFragment(
-            fragmentName,
-            args,
-            resultTo,
-            resultRequestCode,
-            titleRes,
-            shortTitleRes
-        )
-    }
 
     override fun onBuildHeaders(target: List<Header?>?) {
         loadHeadersFromResource(R.xml.header, target)
@@ -250,17 +233,7 @@ class Settings : PreferenceActivity()  {
         }
     }
 
-    override fun startActivityForResult(intent: Intent?, requestCode: Int, options: Bundle?) {
-        tryOn(false){
-            intent?.putExtra(
-                "bun",
-                Bundle().apply {
-                    putBinder("lil", SetCon())
-                }
-            )
-        }
-        super.startActivityForResult(intent, requestCode, options)
-    }
+
 
     private fun restartHomePage() {
 
@@ -356,11 +329,7 @@ class Settings : PreferenceActivity()  {
                 onBackPressed()
                 return true
             }
-            4622 ->{
-                startActivity(Intent(this@Settings, PasswordSet::class.java))
 
-                return true
-            }
         }
 
         return super.onOptionsItemSelected(item)

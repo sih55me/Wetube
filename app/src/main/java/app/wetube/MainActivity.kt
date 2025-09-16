@@ -10,7 +10,9 @@ import android.app.FragmentBreadCrumbs
 import android.app.FragmentManager
 import android.app.Presentation
 import android.app.ProgressDialog
+import android.app.StatusBarManager
 import android.app.TaskStackBuilder
+import android.content.ComponentName
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
@@ -23,6 +25,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.PersistableBundle
+import android.preference.PreferenceActivity
 import android.preference.PreferenceManager
 import android.util.SparseArray
 import android.view.ActionMode
@@ -155,33 +158,47 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
                     Intent(
                         this,
                         Intro::class.java
-                    ).putExtra("bun", b)
+                    ).putExtra("bun", b).addFlags( Intent.FLAG_ACTIVITY_NO_ANIMATION or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 ,SETUP_CODE)
             }
         }
     }
 
+    @SuppressLint("WrongConstant")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if(requestCode == SETUP_CODE){
             if (data?.getBooleanExtra("intro", false) == true) {
-                if (resultCode != RESULT_OK) {
+                if (resultCode == RESULT_OK) {
+                    cuspref.edit().putBoolean("first", false).apply()
+                    val h = Handler(mainLooper)
+                    val d = ProgressDialog(this)
+                    val r = java.lang.Runnable{
+                        d.dismiss()
+                        recreate()
+                    }
+                    d.apply {
+                        setMessage("Restarting in 2 second....")
+                        setCancelable(false)
+                        setButton(DialogInterface.BUTTON_NEGATIVE, getString(android.R.string.cancel)){_,_->
+                            h.removeCallbacks(r)
+                        }
+                        show()
+                    }
+                    h.postDelayed(r, 2000L)
+                }else{
                     finish()
                 }
             }
+
+
         }
     }
 
     @SuppressLint("PrivateApi")
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menu?.apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                add("Shorcut").setOnMenuItemClickListener {
 
-                    requestShowKeyboardShortcuts()
-                    true
-                }
-            }
 
             add(R.string.set)?.setIcon(R.drawable.settings)
             if (isTv) {

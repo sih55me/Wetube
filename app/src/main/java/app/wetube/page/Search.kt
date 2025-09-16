@@ -691,7 +691,7 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
             }
             search(query, channelId, true, filter)
         }
-        if(!f.isSearchFunctionReviewed){
+        if(!f.isSearchFunctionReviewed and (activity != null)){
             java.lang.Runnable{
                 val o = object : ShowCaseDialog.OnToBuild{
                     override fun onToBuild(b: ShowcaseView.Builder) {
@@ -701,19 +701,21 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
                     }
 
                 }
-                ShowCaseDialog(activity,o).apply{
-                    hasNext = true
-                    setOnDismissListener {
-                        f.isSearchFunctionReviewed = true
-                        activity?.actionBar?.setSelectedNavigationItem(2)
-                        activity?.fragmentManager?.findFragmentByTag("m").let {
-                            if(it is MySavedVideo){
-                                it.secIn()
+                try{
+                    ShowCaseDialog(activity, o).apply {
+                        hasNext = true
+                        setOnDismissListener {
+                            f.isSearchFunctionReviewed = true
+                            activity?.actionBar?.setSelectedNavigationItem(2)
+                            activity?.fragmentManager?.findFragmentByTag("m").let {
+                                if (it is MySavedVideo) {
+                                    it.secIn()
+                                }
                             }
                         }
+                        show()
                     }
-                    show()
-                }
+                }catch (_: Exception){}
             }.let {
                 Handler(activity!!.mainLooper).postDelayed(it, 800L)
             }

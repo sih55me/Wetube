@@ -2,16 +2,17 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/holo_orange_light">
+    android:layout_height="match_parent">
 
-    <android.support.v4.widget.NestedScrollView
+    <ScrollView
         android:layout_width="match_parent"
+        android:fillViewport="true"
+        android:id="@+id/container"
         android:layout_height="match_parent">
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
 
             <TextView
                 android:id="@+id/content"
@@ -22,7 +23,6 @@
                 android:fontFamily="@font/parkinsans"
                 android:gravity="center_horizontal"
                 android:text="@string/pc1"
-                android:textColor="@color/white"
                 android:textSize="20sp" />
 
             <ImageView
@@ -31,8 +31,8 @@
                 android:layout_height="100dp"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="150dp"
+                android:tint="?android:colorControlNormal"
                 android:src="@drawable/swipe_left"
-                android:tint="@color/white"
                 tools:ignore="UseAppTint" />
 
             <TextView
@@ -45,10 +45,9 @@
                 android:fontFamily="@font/parkinsans"
                 android:gravity="center_horizontal"
                 android:text="@string/pt1"
-                android:textColor="@color/white"
                 android:textSize="40sp" />
         </RelativeLayout>
-    </android.support.v4.widget.NestedScrollView>
+    </ScrollView>
 
 
 </RelativeLayout>

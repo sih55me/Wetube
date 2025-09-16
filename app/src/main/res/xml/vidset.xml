@@ -51,4 +51,5 @@
             android:positiveButtonText="Set"
             android:title="Fast seek duraction" />
     </PreferenceCategory>
+
 </PreferenceScreen>

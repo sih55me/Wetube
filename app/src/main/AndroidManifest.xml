@@ -178,7 +178,7 @@
         <activity
             android:name=".set.RVSet"
             android:exported="true"
-
+            android:documentLaunchMode="never"
             android:launchMode="singleTop"
             tools:ignore="ExportedPreferenceActivity" />
 
@@ -186,7 +186,6 @@
             android:name=".service.RandomVids"
             android:exported="true"
             android:icon="@mipmap/ic_launcher_add"
-
             android:roundIcon="@mipmap/ic_launcher_add"
             android:banner="@drawable/video"
             android:logo="@drawable/default_background"

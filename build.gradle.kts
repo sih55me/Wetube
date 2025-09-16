@@ -5,14 +5,12 @@ buildscript {
         allprojects{
             mavenCentral()
             maven ( url = "https://jitpack.io" )
-
             jcenter()
         }
+
         // other repositories...
 
     }
-
-
 }
 
 plugins {
