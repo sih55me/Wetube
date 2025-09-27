@@ -23,7 +23,6 @@ open class Sheet() :DialogFragment(), TransPaper{
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        retainInstance = !true
     }
 
     override val connector: Fragment get() = this

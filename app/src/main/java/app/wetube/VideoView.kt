@@ -30,6 +30,7 @@ import android.graphics.Color
 import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.media.MediaRouter
@@ -105,10 +106,7 @@ import app.wetube.service.FloatVideo.Companion.isPipServiceRunning
 import app.wetube.service.FloatVideo.Companion.requestOverlayDisplayPermission
 import app.wetube.service.Yt
 import app.wetube.window.Paper
-import com.bumptech.glide.Glide
-import com.bumptech.glide.Priority
 import com.bumptech.glide.request.animation.GlideAnimation
-import com.bumptech.glide.request.target.BitmapImageViewTarget
 import com.bumptech.glide.request.target.SimpleTarget
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlaybackRate
@@ -118,6 +116,9 @@ import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.Abs
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.YouTubePlayerListener
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.options.IFramePlayerOptions
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.utils.YouTubePlayerTracker
+import com.squareup.picasso.Picasso
+import com.squareup.picasso.Target
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.roundToInt
@@ -130,6 +131,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     val db by lazy { VidDB(this) } ;
     var menu : Menu? = null
     var dialogStack = 0
+
+    var qualityList = listOf<String>()
+    var qualityNow = "default"
 
     var fulldia: Dialog? = null
     /**
@@ -363,8 +367,8 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         animatort.addUpdateListener { animation ->
             val animatedValue = animation.getAnimatedValue();
             if (animatedValue is Int) {
-                bin.videoLay.tul.background.mutate().alpha = animatedValue
-                bin.videoLay.bottom.background.mutate().alpha = animatedValue
+                bin.videoLay.tul.background?.mutate()?.alpha = animatedValue
+                bin.videoLay.bottom.background?.mutate()?.alpha = animatedValue
             }
         }
 
@@ -463,6 +467,8 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         if(setValue){
             isFullscreen = false
         }
+        bin.videoLay.bottom.setPadding(0,0,0, 0)
+        bin.videoLay.tul.setPadding(0,0,0, 0)
 
     }
     var vidSize = Pair(0,0)
@@ -479,8 +485,8 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         animatort.addUpdateListener { animation ->
             val animatedValue = animation.getAnimatedValue();
             if (animatedValue is Int) {
-                bin.videoLay.tul.background.mutate().alpha = animatedValue
-                bin.videoLay.bottom.background.mutate().alpha = animatedValue
+                bin.videoLay.tul.background?.mutate()?.alpha = animatedValue
+                bin.videoLay.bottom.background?.mutate()?.alpha = animatedValue
             }
         }
         val animatorw = ValueAnimator.ofInt( view.height, window.decorView.height);
@@ -527,13 +533,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
             } else {
                 ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             }
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                bin.videoLay.container.setOnApplyWindowInsetsListener { v, insets ->
-                    val notch = insets.getInsets(WindowInsets.Type.displayCutout())
-                    bin.videoLay.tul.setPadding(notch.left, notch.top, notch.right, 0)
-                    WindowInsets.CONSUMED
-                }
-            }
+
 
 
             if(setValue){
@@ -559,7 +559,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                 )
             }
             bin.videoLay.seekbarStock.visibility = View.VISIBLE
-            bin.swipe.setPadding(0,0,0,0)
+
         }
         if(anim){
             s.addListener(object: Animator.AnimatorListener{
@@ -588,6 +588,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         }else{
             r.run()
         }
+
+
+
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -658,6 +661,14 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.video_prefence, menu)
         menu?.apply{
+            findItem(R.id.del_ic)?.also {
+                it.setIcon(if (db.listAsList().map { it.videoId }.contains(video_id)) R.drawable.delete else R.drawable.add)
+                it.setTitle(if (db.listAsList().map { it.videoId }.contains(video_id)) R.string.del else R.string.add)
+            }
+            add("Quality").setOnMenuItemClickListener {
+                showDialog(QV_DIALOG)
+                true
+            }
             add("Zoom").setOnMenuItemClickListener {
                 showDialog(200)
                 true
@@ -966,12 +977,23 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         setupTheme()
         translut.setTranslucentStatus(true)
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_ATTACHED_IN_DECOR)
+        window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.attributes.fitInsetsTypes = 0
+        }
         p = intent.getIntExtra("vi", 1)
         setContentView(bin.root)
         setActionBar(bin.videoLay.tul)
         updateView()
+        window.navigationBarColor = Color.TRANSPARENT
+        window.statusBarColor = Color.TRANSPARENT
         showBackButton()
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+        }
+        bin.videoLay.tul.popupTheme = getThemeId()
         fulldia = object :Dialog(this, getThemeId()){
             init {
                 window?.setWindowAnimations(android.R.style.Animation_Dialog)
@@ -998,8 +1020,52 @@ class VideoView : Activity(), PlayerProyektor.Connection{
             bin.root.setOnApplyWindowInsetsListener{v,i->
                 val top = i.getInsets(WindowInsets.Type.statusBars() or WindowInsets.Type.displayCutout())
                 val bot = i.getInsets(WindowInsets.Type.navigationBars())
-                bin.vidlay.setPadding(0,top.top,0,0)
+                val insets = i.displayCutout
                 bin.playlist.setPadding(0,0,0,bot.bottom)
+                val normalLayout = fun(){
+                    bin.videoLay.tul.layoutParams.also{
+                        if(it is ViewGroup.MarginLayoutParams){
+                            0.let{i->
+                                it.topMargin = i
+                                it.leftMargin = i
+                                it.rightMargin = i
+                            }
+                        }
+                    }
+
+                    bin.videoLay.bottom.layoutParams.also{
+                        if(it is ViewGroup.MarginLayoutParams){
+                            0.let{i->
+                                it.leftMargin = i
+                                it.rightMargin = i
+                            }
+                        }
+                    }
+                }
+                if(isFullscreen){
+                    bin.vidlay.setPadding(0,0,0,0)
+                    insets?.let { notch ->
+                        bin.videoLay.tul.layoutParams.also{
+                            if(it is ViewGroup.MarginLayoutParams){
+                                it.topMargin = notch.safeInsetTop
+                                it.leftMargin = notch.safeInsetLeft
+                                it.rightMargin = if(dialogStack == 0)notch.safeInsetRight else 0
+                            }
+                        }
+
+                        bin.videoLay.bottom.layoutParams.also{
+                            if(it is ViewGroup.MarginLayoutParams){
+                                it.leftMargin = notch.safeInsetLeft
+                                it.rightMargin = if(dialogStack == 0)notch.safeInsetRight else 0
+                            }
+                        }
+
+                    }
+                }else{
+
+                    bin.vidlay.setPadding(0,top.top,0,0)
+                    normalLayout()
+                }
                 WindowInsets.CONSUMED
             }
         }else{
@@ -1024,7 +1090,10 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
                     override fun onBackStarted(backEvent: BackEvent) {
                         window.decorView.animate().scaleX(0.8F).scaleY(0.8F).y(100F)
+
+
                     }
+
 
 
 
@@ -1103,6 +1172,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
 
 
+
         var isReadyToChange = false
 
         bin.videoview.isBackgroundPlaybackEnabled = (true)
@@ -1142,6 +1212,25 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                 }
             }
 
+
+            override fun onPlaybackQualityChange(
+                youTubePlayer: YouTubePlayer,
+                playbackQuality: PlayerConstants.PlaybackQuality
+            ) {
+
+                qualityNow = when(playbackQuality){
+                    PlayerConstants.PlaybackQuality.SMALL -> "small"
+                    PlayerConstants.PlaybackQuality.MEDIUM -> "medium"
+                    PlayerConstants.PlaybackQuality.LARGE -> "large"
+                    PlayerConstants.PlaybackQuality.HD720 -> "hd720"
+                    PlayerConstants.PlaybackQuality.HD1080 -> "hd1080"
+                    PlayerConstants.PlaybackQuality.HIGH_RES -> "highres"
+                    PlayerConstants.PlaybackQuality.DEFAULT -> "default"
+                    else -> "unknown" // Or handle other cases as needed
+                }
+                super.onPlaybackQualityChange(youTubePlayer, playbackQuality)
+            }
+
             override fun onVideoId(youTubePlayer: YouTubePlayer, videoId: String) {
                 super.onVideoId(youTubePlayer, videoId)
                 if(erdialog.isShowing){
@@ -1155,6 +1244,10 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     if(itIs) {
                         title = d.find { it.videoId == videoId }?.title
                     }
+                }
+
+                if(!Handler(mainLooper).post { bin.videoview.loadUrl("javascript:sendVideoQuality()") }){
+                    Log.e("Quality", "not found")
                 }
 
             }
@@ -1191,6 +1284,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                 }
 
 
+
                 super.onCurrentSecond(youTubePlayer, second)
             }
 
@@ -1207,6 +1301,8 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                 bin.videoLay.seekbarStock.setMax(duration.toInt())
                 super.onVideoDuration(youTubePlayer, duration)
             }
+            
+            
 
             override fun onStateChange(
                 youTubePlayer: YouTubePlayer,
@@ -1221,6 +1317,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                                 v.visibility = View.GONE
                         }
                     }
+
                     fade.isDisabled = false
                     val vd = bin.videoLay.duraction
                     if(vd.visibility != View.VISIBLE) {
@@ -1251,16 +1348,13 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
                             val note = d?.get(p + 1) as Video
                             val d = windowManager.defaultDisplay
-                            Glide.with(this@VideoView).load("https://i.ytimg.com/vi/${note.videoId}/hqdefault.jpg").asBitmap().centerCrop().error(ColorDrawable(Color.BLACK)).into(object : BitmapImageViewTarget(bin.videoLay.imageView4){
-                                override fun setResource(resource: Bitmap?) {
-                                    super.setResource(resource)
+                            Picasso.get().load("https://i.ytimg.com/vi/${note.videoId}/hqdefault.jpg").error(ColorDrawable(Color.BLACK)).into(object : Target{
+                                fun setResource(resource: Bitmap?) {
                                     if(resource == null)return
                                     Palette.from(resource).generate{b->
                                         (b?.dominantSwatch ?: b?.darkVibrantSwatch)?.let {
-                                            bin.videoLay.ntitle.setTextColor(it.bodyTextColor)
-                                            bin.videoLay.ninfo.setTextColor(it.titleTextColor)
-                                            bin.videoLay.ntitle.setShadowLayer(20F,0F,0F,it.rgb)
-                                            bin.videoLay.ninfo.setShadowLayer(20F,0F,0F,it.rgb)
+                                            bin.videoLay.ntitle.setTextColor(it.rgb)
+                                            bin.videoLay.ninfo.setTextColor(it.rgb)
                                         }
 
 
@@ -1268,6 +1362,25 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
 
 
+                                }
+
+                                override fun onBitmapLoaded(
+                                    bitmap: Bitmap?,
+                                    from: Picasso.LoadedFrom?
+                                ) {
+                                    (bin.videoLay.imageView4).setImageBitmap(bitmap)
+                                    setResource(bitmap)
+                                }
+
+                                override fun onBitmapFailed(
+                                    e: java.lang.Exception?,
+                                    errorDrawable: Drawable?
+                                ) {
+
+                                }
+
+                                override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+                                    (bin.videoLay.imageView4).setImageDrawable(placeHolderDrawable)
                                 }
                             })
                             v.animate().translationY(0F).alpha(1f)
@@ -1287,7 +1400,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
                         }
                         else{
-                            bin.videoLay.root.background = ColorDrawable(window.statusBarColor)
+                            bin.videoLay.root.background = ColorDrawable(getColor(R.color.black))
                         }
                         false
                     }
@@ -1507,7 +1620,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
             }
             seekbarStock.setOnSeekBarChangeListener(sk)
         }
-        val options: IFramePlayerOptions = IFramePlayerOptions.Builder().controls(0).ivLoadPolicy(3).ccLoadPolicy(0).build()
+        val options: IFramePlayerOptions = IFramePlayerOptions.Builder().controls(0).ivLoadPolicy(3).ccLoadPolicy(0).origin("https://google").build()
         val s = Point()
 
         windowManager.defaultDisplay.getSize(s)
@@ -1525,6 +1638,10 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                 t.setAllowClickWhenDisabled(false)
             }
             //change user agent
+            t.qualityListener = fun(l){
+                qualityList = l
+                Log.i("Quality","Quality found : ${l.size}")
+            }
             t.settings.javaScriptEnabled = true
             t.initialize({
                 it.addListener(ll)
@@ -1716,38 +1833,34 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     }
 
     val setupThumb : Unit get() {
+        val transColor = sp.getBoolean("transColor", false)
         tryOn{
             val d = windowManager.defaultDisplay
-            Glide.with(this@VideoView.baseContext)
+            Picasso.get()
                 .load("https://i.ytimg.com/vi/${video_id}/hqdefault.jpg")
-                .asBitmap()
                 .placeholder(R.drawable.ic_launcher_background)
                 .error(R.drawable.unhappy)
-                .priority(Priority.HIGH)
-                .approximate()
-                .dontAnimate()
-                .into(object :
-                    SimpleTarget<Bitmap>(d.width,d.height) {
-                    override fun onResourceReady(
+                .priority(Picasso.Priority.HIGH)
+                .into(object : Target {
+                    override fun onBitmapLoaded(
                         resource: Bitmap?,
-                        glideAnimation: GlideAnimation<in Bitmap>?,
+                        from: Picasso.LoadedFrom?
                     ) {
                         thumb = resource
+                        if(!transColor)return //job done if transColor disable
                         if(resource != null){
                             Palette.from(resource).generate{b->
                                 if(b == null)return@generate
 
                                 (b.darkVibrantSwatch?:b.darkMutedSwatch?:b.dominantSwatch)?.let {
-                                    window.statusBarColor = it.rgb
+
                                     bin.videoLay.duraction.setTextColor(it.titleTextColor)
                                     window.setBackgroundDrawable(ColorDrawable(it.rgb))
+                                    bin.videoLay.tul.setBackgroundResource(R.drawable.actionbar_trans)
                                     bin.videoLay.tul.backgroundTintList = ColorStateList.valueOf(it.rgb)
+                                    bin.videoLay.bottom.setBackgroundResource(R.drawable.bottom)
                                     bin.videoLay.bottom.backgroundTintList = ColorStateList.valueOf(it.rgb)
                                     bin.plti.setTextColor(it.bodyTextColor)
-                                    window.navigationBarColor = it.rgb
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                                        window.navigationBarDividerColor = adjustAlpha(it.titleTextColor, 0.11F)
-                                    }
                                     bin.title.setTextColor(it.titleTextColor)
                                     with(bin.playlist){
                                         divider = ColorDrawable(it.titleTextColor)
@@ -1776,22 +1889,26 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                         setTaskDescription(ActivityManager.TaskDescription(noted?.title, resource, window.statusBarColor))
                     }
 
+                    override fun onBitmapFailed(
+                        e: java.lang.Exception?,
+                        errorDrawable: Drawable?
+                    ) {
+                        info("Failed to load thumbnail")
+                    }
+
+                    override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+
+                    }
+
 
                 })
         }
     }
 
-    val d = Activity.ScreenCaptureCallback{
-        window.decorView.animate().scaleX(0.2F).withEndAction {
-            window.decorView.animate().scaleX(1F)
-        }
-    }
     override fun onStart() {
         super.onStart()
         setupThumb
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            registerScreenCaptureCallback(mainExecutor,d)
-        }
+
     }
 
     @RequiresApi(Build.VERSION_CODES.R)
@@ -1865,7 +1982,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         const val ADD_DIALOG = 3
         const val DEL_DIALOG = 4
         const val VF_DIALOG = 5
-        const val PIP_PERMI_DIALOG = 6
+        const val QV_DIALOG = 6
         const val REPLAY_DIALOG = 7
     }
 
@@ -1953,10 +2070,12 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                             window!!.attributes?.width = bin.swipe.width
                             window!!.attributes?.x = bin.swipe.x.toInt()
                             window!!.attributes?.gravity = Gravity.BOTTOM
+                            window!!.setWindowAnimations(android.R.style.Animation_InputMethod)
                         } else {
                             val s = Point()
                             windowManager.defaultDisplay.getSize(s)
                             val d = this@VideoView.windowManager.defaultDisplay
+                            window!!.setWindowAnimations(android.R.style.Animation_Translucent)
                             window!!.attributes?.height =
                                 ViewGroup.LayoutParams.MATCH_PARENT
                             window!!.attributes?.width = d.height
@@ -2091,13 +2210,68 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     }
                 }
             }
+            QV_DIALOG -> {
+                AlertDialog.Builder(this@VideoView, if(!lockPot) this@VideoView.getThemeId() else 0).apply {
+                    setTitle("Quality Video")
+                    if(qualityList.isNotEmpty()){
+                        setSingleChoiceItems(qualityList.toTypedArray(), -1) { _, index ->
+                            val mainThreadHandler = Handler(mainLooper)
+                            try {
+                                val i = qualityList[index]
+                                if (!mainThreadHandler.post { bin.videoview.loadUrl("javascript:setPlaybackQuality(\"$i\")") }) {
+                                    info("Quality not set")
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                info("Quality not set")
+                            }
+                        }
+                    }
+                    else{
+                        setMessage("Opps...\nTry again")
+                        setPositiveButton("Fine", null)
+                    }
+
+
+                }.create().apply {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            window!!.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                        }else{
+                            window!!.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                        }
+                    }
+                    if(!lockPot){
+                        window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        if (!isInFullscreen) {
+                            window!!.setWindowAnimations(android.R.style.Animation_InputMethod)
+                            window!!.attributes?.height = bin.swipe.height
+                            window!!.attributes?.width = bin.swipe.width
+                            window!!.attributes?.x = bin.swipe.x.toInt()
+                            window!!.attributes?.gravity = Gravity.BOTTOM
+                        } else {
+                            val s = Point()
+                            window!!.setWindowAnimations(android.R.style.Animation_Translucent)
+                            windowManager.defaultDisplay.getSize(s)
+                            val d = this@VideoView.windowManager.defaultDisplay
+                            window!!.attributes?.height =
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                            window!!.attributes?.width = d.height
+                            window!!.attributes?.gravity = Gravity.END
+                        }
+                    }
+                }
+            }
             VOLUME_DIALOG -> {
-                object : Paper(this@VideoView){
+                object : AlertDialog(this@VideoView, this.getThemeId()){
                     init {
+                        setTitle("Volume")
                         volView.releaseParent()
+                        setView(volView)
                         if(!lockPot){
                             window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
                             if (!isInFullscreen) {
+                                window?.setWindowAnimations(android.R.style.Animation_InputMethod)
                                 window!!.attributes?.height = bin.swipe.height
                                 window!!.attributes?.width = bin.swipe.width
                                 window!!.attributes?.x = bin.swipe.x.toInt()
@@ -2105,6 +2279,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                             } else {
                                 val s = Point()
                                 windowManager.defaultDisplay.getSize(s)
+                                window?.setWindowAnimations(android.R.style.Animation_Translucent)
                                 val d = this@VideoView.windowManager.defaultDisplay
                                 window!!.attributes?.height = ViewGroup.LayoutParams.MATCH_PARENT
                                 window!!.attributes?.width = d.height
@@ -2115,19 +2290,10 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     }
 
                     override fun show() {
-                        volView.releaseParent()
-                        tryOn{ setContentView(volView) }
-                        setTitle("Volume")
                         this.setCanceledOnTouchOutside(true)
                         super.show()
                     }
 
-                    override fun setupActionBar(actionBar: ActionBar) {
-                        super.setupActionBar(actionBar)
-                        showBackButton(R.drawable.close){
-                            dismiss()
-                        }
-                    }
 
                     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
                         if(keyCode == KeyEvent.KEYCODE_VOLUME_DOWN){
@@ -2210,14 +2376,34 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     }.create()
             }
             VF_DIALOG -> {
-                AlertDialog.Builder(this@VideoView).apply {
+                AlertDialog.Builder(this@VideoView, if(!lockPot) this@VideoView.getThemeId() else 0).apply {
                     setTitle(R.string.vefu)
                     setMessage(R.string.vefume)
                     setNegativeButton(android.R.string.cancel, null)
                     setPositiveButton(R.string.enter) { _, _ ->
                         enterFullscreen(true)
                     }
-                }.create()
+                }.create().apply{
+                    if(!lockPot){
+                        window?.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+                        window?.setWindowAnimations(android.R.style.Animation_InputMethod)
+                        window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        if (!isInFullscreen) {
+                            window!!.attributes?.height = bin.straing.height + bin.vidlay.paddingTop
+                            window!!.attributes?.width = bin.straing.width
+                            window!!.attributes?.x = bin.straing.x.toInt()
+                            window!!.attributes?.gravity = Gravity.TOP
+                        } else {
+                            val s = Point()
+                            windowManager.defaultDisplay.getSize(s)
+                            val d = this@VideoView.windowManager.defaultDisplay
+                            window!!.attributes?.height = ViewGroup.LayoutParams.MATCH_PARENT
+                            window!!.attributes?.width = d.height
+                            window!!.attributes?.gravity = Gravity.END
+                        }
+                    }
+                }
+
             }
 
             else -> Dialog(this)
@@ -2226,7 +2412,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
     override fun onPrepareDialog(id: Int, dialog: Dialog?) {
         val d = this@VideoView.windowManager.defaultDisplay
-        if((id == VOLUME_DIALOG) or (id == QR_DIALOG) or (id == 200)){
+        if((id == VOLUME_DIALOG) or (id == QR_DIALOG) or (id == 200) or (id == QV_DIALOG)){
             dialog?.setOnDismissListener {
                 dialogStack--
                 if((dialogStack == 0) and isInFullscreen){
@@ -2241,7 +2427,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         }
         dialog?.window?.let { configNotchWindow(it) }
 
-        if((id == VOLUME_DIALOG) or (id == QR_DIALOG) or (id == 200)){
+        if((id == VOLUME_DIALOG) or (id == QR_DIALOG) or (id == 200) or (id == QV_DIALOG)){
             dialog?.setOnShowListener {
 
                 dialogStack++
@@ -2306,9 +2492,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
     override fun onStop() {
         super.onStop()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            unregisterScreenCaptureCallback(d)
-        }
+
         if (mPresentation != null) {
             mPresentation?.dismiss();
             mPresentation = null;
@@ -2322,11 +2506,11 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
     private fun setUiState(show:Boolean){
         if(show) {
-            bin.videoLay.tul.background.mutate().alpha = 255
+            bin.videoLay.tul.background?.mutate()?.alpha = 255
 
             try{ actionBar?.show() }catch (_:Exception){}
         }else {
-            bin.videoLay.tul.background.mutate().alpha = 0
+            bin.videoLay.tul.background?.mutate()?.alpha = 0
             try{ actionBar?.show() }catch (_:Exception){}
         }
     }
@@ -2453,21 +2637,32 @@ class VideoView : Activity(), PlayerProyektor.Connection{
             }
             R.id.thumbnail ->{
                 val d = windowManager.defaultDisplay
-                Glide.with(this@VideoView.baseContext)
+                Picasso.get()
                     .load("https://i.ytimg.com/vi/${video_id}/hqdefault.jpg")
-                    .asBitmap()
                     .error(R.drawable.unhappy)
-                    .into(object : SimpleTarget<Bitmap>(d.width, d.height) {
-
-                        override fun onResourceReady(
-                            resource: Bitmap?,
-                            glideAnimation: GlideAnimation<in Bitmap>?,
+                    .into(object : Target {
+                        override fun onBitmapLoaded(
+                            bitmap: Bitmap?,
+                            from: Picasso.LoadedFrom?
                         ) {
-                            resource?.let{bitmap->
-                                shareImageandText(bitmap)
+                            if(bitmap == null){
+                                info("Failed to share thumbnail")
+                                return
                             }
+                            shareImageandText(bitmap)
+                        }
+
+                        override fun onBitmapFailed(
+                            e: java.lang.Exception?,
+                            errorDrawable: Drawable?
+                        ) {
+                            info("Failed to share thumbnail")
+                        }
+
+                        override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
 
                         }
+
 
                     })
             }

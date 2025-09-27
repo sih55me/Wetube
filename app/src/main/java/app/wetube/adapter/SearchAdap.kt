@@ -39,6 +39,7 @@ import app.wetube.page.dialog.InfoVid
 import app.wetube.service.FloatVideo
 import app.wetube.service.Yt.atPip
 import com.bumptech.glide.Glide
+import com.squareup.picasso.Picasso
 import java.util.Locale
 
 class SearchAdap(
@@ -49,7 +50,6 @@ class SearchAdap(
     : BaseAdapter(), SectionIndexer{
     val p = Intent(activity, FloatVideo::class.java)
     var needCab: Boolean = true
-    private val r by lazy { Glide.with(activity.application) }
     var mode : ActionMode? = null
     val selist :MutableList<VideoDetail> = mutableListOf()
     var mapIndex: HashMap<String, Int>? = linkedMapOf<String, Int>()
@@ -149,11 +149,8 @@ class SearchAdap(
         }
         try{
             Handler(activity.mainLooper).postDelayed({
-                r?.let {
-                    it.load("https://i.ytimg.com/vi/${note.videoId}/hqdefault.jpg") .also{
-                        tryOn{ it.override(d.width, d.height) }
-                    }.placeholder(R.drawable.music_play)?.centerCrop()?.error(R.drawable.error)
-                        ?.into(d)
+                Picasso.get().let {
+                    it.load("https://i.ytimg.com/vi/${note.videoId}/hqdefault.jpg").placeholder(R.drawable.music_play)?.error(R.drawable.error)?.into(d)
                 }
             }, 0L)
         }catch (e:Exception){

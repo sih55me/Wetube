@@ -56,8 +56,5 @@
     <item
         android:id="@+id/floating"
         android:title="Floating" />
-    <item
-        android:title="@string/select"
-        android:id="@+id/sel"/>
 
 </menu>

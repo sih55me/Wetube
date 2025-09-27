@@ -234,7 +234,7 @@ class  ChannelInfo : Activity() {
         return when(id){
             VideoView.QR_DIALOG ->{
                 val t = args?.getString("txt") ?: return null
-                QRCodePage(this, t)
+                QRCodePage(this, t, true)
             }
 
             316109->{
@@ -245,6 +245,10 @@ class  ChannelInfo : Activity() {
                 PreviewImgPage(this, args?.getBinder(PreviewImgPage.PREVIEW_CODE))
             }
             else -> super.onCreateDialog(id, args)
+        }?.apply {
+            setOnDismissListener {
+                removeDialog(id)
+            }
         }
 
     }

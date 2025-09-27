@@ -49,6 +49,7 @@ import app.wetube.ActivityDialog
 import app.wetube.ChannelInfo
 import app.wetube.MainActivity
 import app.wetube.R
+import app.wetube.SearchNResult
 import app.wetube.adapter.HistoryAdapter
 import app.wetube.adapter.SearchAdap
 import app.wetube.adapter.SearchAdap.Option
@@ -101,10 +102,9 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
     private var query = ""
     var channelId = ""
     var filter = ""
-    val hisadap by lazy{ HistoryAdapter(hidb.listAsList(), activity, keyHistory)}
     val db by lazy{VidDB(activity!!.applicationContext)}
+    val hdb by lazy{ HistoryDB(activity!!.applicationContext)}
     val cdb by lazy{ FavChaDB(activity!!.applicationContext)}
-    val hidb by lazy{HistoryDB(activity!!.applicationContext)}
     var search: SearchView? = null
     protected val suggestions: SearchRecentSuggestions by lazy {
         SearchRecentSuggestions(
@@ -218,8 +218,8 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
 
 
     var titleBar = ""
-    
-    
+
+
 
     protected val searchManager: android.app.SearchManager by lazy {
         activity!!.getSystemService(Context.SEARCH_SERVICE) as android.app.SearchManager
@@ -332,121 +332,19 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
 
         }
         tryOut(activity!!) {
-            if (true) {
-                search = SearchView(activity.actionBar?.themedContext ?: activity).apply {
-                    queryHint = getString(android.R.string.search_go)
-                    setSearchableInfo(si)
-                }
-            }
+
             menu.findItem(R.id.app_bar_search).apply {
-                openSearch = Runnable {
-                    this.expandActionView()
-                }
                 isVisible = true
-                if (!sp.getBoolean("forceWeIcon", false)) {
-                    if (sp.getString("theme", "w") != "w") {
-                        setIcon(android.R.drawable.ic_menu_search)
-                    }
+                setOnMenuItemClickListener {
+                    startActivityForResult(Intent(activity, SearchNResult::class.java), 50)
+                    true
                 }
-                actionView = search
-                setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW or MenuItem.SHOW_AS_ACTION_ALWAYS)
-                setOnActionExpandListener(searchBehav)
             }
         }
         super.onCreateOptionsMenu(menu, inflater)
     }
 
-    val keyHistory = object : HistoryAdapter.HistoryListener{
-        override fun onClick(text: CharSequence) {
-            d?.dismiss()
-            d = null
-            activity?.window?.tul?.collapseActionView()
-            search(text.toString(), channelId, false, filter)
-        }
 
-        override fun onUp(text: CharSequence) {
-            search?.setQuery(text, false)
-        }
-
-        override fun onDelete(text: CharSequence) {
-            AlertDialog.Builder(activity!!).setTitle(text).setMessage("Delete this from history?").setPositiveButton(R.string.del){_,_->
-                info(if(hidb.deleteByName(text.toString()))"Deleted" else "Fail to deleted")
-                loadHistory()
-            }.setNegativeButton(android.R.string.cancel, null).show()
-        }
-
-
-    }
-
-    val searchBehav = object : MenuItem.OnActionExpandListener {
-
-        override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
-            onSearch = false
-            d?.dismiss()
-            return true
-        }
-
-        override fun onMenuItemActionExpand(item: MenuItem): Boolean {
-            onSearch = true
-            search?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String): Boolean {
-                    search(query, channelId, false, filter)
-                    return true
-                }
-
-                override fun onQueryTextChange(newText: String): Boolean {
-                    this@Search.withQuery(newText, item)
-                    return true
-                }
-            })
-            Handler(activity!!.mainLooper).postDelayed({
-                search?.setQuery(query, false)
-            }, 30L)
-            withQuery("", item)
-            return true
-        }
-
-
-    }
-    fun withQuery(string: String, item: MenuItem) {
-        if(!onSearch)return
-
-        if(string.isNotEmpty()){
-            hisadap.clear()
-            val r = hidb.listAsList().filter { it.contains(string, true) }
-
-            hisadap.addAll(r)
-        }else{
-            loadHistory()
-        }
-        if(hisadap.isEmpty){
-            d?.dismiss()
-            return
-        }
-        if(d == null){
-
-            d = ListPopupWindow(activity!!).apply {
-                anchorView = item.actionView
-                isModal = false
-
-                setInputMethodMode(ListPopupWindow.INPUT_METHOD_NEEDED)
-                setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                setOnDismissListener {
-                    d = null
-                }
-                Handler(Looper.myLooper()!!).postDelayed({
-                    try {
-                        show()
-                        listView?.setOverScrollMode(View.OVER_SCROLL_NEVER)
-                    } catch (_: Exception) {
-                        d = null
-                    }
-                }, 50L)
-            }
-        }
-        d?.setAdapter(hisadap)
-
-    }
 
     fun manageDialog(){
         val view = TokenmanagerBinding.inflate(activity!!.layoutInflater)
@@ -571,6 +469,17 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
         return true
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if((requestCode == 50)){
+            if(resultCode == Activity.RESULT_OK) {
+                val t = data?.getStringExtra(Intent.EXTRA_TEXT)?:"--------"
+                search(t, channelId, true, filter)
+            }
+        }
+        Log.i("OnResult", "Req = $requestCode\nRes = $resultCode")
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+
 
 
 
@@ -609,8 +518,6 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
         }else{
             showItem(false)
         }
-
-        loadHistory()
         bin.insturcBtn.apply {
 
             setOnClickListener {
@@ -624,7 +531,7 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
                         activity?.showDialog(MainActivity.DIALOG_SEARCH, it)
                     }
                 }else{
-                    openSearch.run()
+                    startActivityForResult(Intent(activity, SearchNResult::class.java), 50)
                 }
             }
             setOnLongClickListener{
@@ -724,11 +631,6 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
     }
 
 
-
-    private fun loadHistory() {
-        hisadap.clear()
-        hisadap.addAll(hidb.listAsList())
-    }
 
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -1004,11 +906,9 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
             Toast.makeText(c, "No interaction", Toast.LENGTH_LONG).show()
             return
         }
-        hidb.listAsList().apply {
-            if (!contains(query)) {
-                hidb.doing{
-                    it.insert(query)
-                }
+        hdb.doing{d->
+            if(!d.listAsList().contains(query)) {
+                d.insert(query)
             }
         }
         val sp = PreferenceManager.getDefaultSharedPreferences(activity!!)
@@ -1041,7 +941,6 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
                 fadeIn(bin.videosList)
                 fadeOut(bin.emptyContainer)
                 fadeOut(bin.progressBar2)
-                loadHistory()
                 showItem(true)
                 if(adap.data.isEmpty()){
                     info("Not video available")
@@ -1079,7 +978,7 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
             }
             setNegativeButton(android.R.string.cancel, null)
         }.create().apply{
-            
+
             show()
         }
     }

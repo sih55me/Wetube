@@ -106,7 +106,7 @@ fun Context.getThemeResDialog() :Int {
         "wa" -> R.style.Wetube_Sy_Dialog
         "d" -> android.R.style.Theme_DeviceDefault_Light_Dialog_Alert
         "dd" -> android.R.style.Theme_DeviceDefault_Dialog_Alert
-        else -> themeAlertDialog
+        else -> themeDialog
     }
 }
 

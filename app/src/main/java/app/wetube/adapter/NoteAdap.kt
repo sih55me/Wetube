@@ -39,6 +39,7 @@ import app.wetube.service.FloatVideo
 import app.wetube.service.Yt.atPip
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.BitmapImageViewTarget
+import com.squareup.picasso.Picasso
 import java.util.Locale
 
 
@@ -52,7 +53,7 @@ open class NoteAdap(
     var colorize = true
     val p = Intent(activity, FloatVideo::class.java)
     var mode : ActionMode? = null
-    private val r by lazy { Glide.with(activity.application) }
+
     val selist :MutableList<Video> = mutableListOf()
     val tlc by lazy{ TranslucentHelper(activity.window, activity) }
     var infoShowing = false
@@ -168,9 +169,6 @@ open class NoteAdap(
                         }
                     }
                     when (it.itemId) {
-                        R.id.sel -> {
-                            checkInd.toggle()
-                        }
                         R.id.delbtn -> {
                             if (selist.size >= 2) {
                                 listener.onDeleteList(selist)
@@ -296,18 +294,11 @@ open class NoteAdap(
                 }
             }
            try{
-               Handler(activity.mainLooper).postDelayed({
-                   r?.let {
-                       it.load("https://i.ytimg.com/vi/${note.videoId}/hqdefault.jpg").asBitmap().also{
-                           tryOn{ it.override(d.width, d.height) }
-                       }.placeholder(R.drawable.music_play)?.centerCrop()?.error(R.drawable.error)
-                           ?.into(object : BitmapImageViewTarget(holder.imageView){
-                               override fun setResource(resource: Bitmap?) {
-                                   super.setResource(resource)
-                               }
-                           })
+               Handler(activity.mainLooper).post({
+                   Picasso.get()?.let {
+                       it.load("https://i.ytimg.com/vi/${note.videoId}/hqdefault.jpg").placeholder(R.drawable.music_play)?.error(R.drawable.error)?.into(holder.imageView)
                    }
-               }, 0L)
+               })
            }catch (e:Exception){
                e.printStackTrace()
            }

@@ -1,12 +1,16 @@
 package app.wetube.set
 
+import android.app.ActionBar
+import android.app.Activity
 import android.app.ActivityManager
 import android.app.AlertDialog
 import android.app.Dialog
 import android.app.Fragment
+import android.app.FragmentTransaction
 import android.app.LocalActivityManager
 import android.app.ProgressDialog
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Binder
 import android.os.Build
 import android.os.Bundle
@@ -34,182 +38,131 @@ import app.wetube.core.showBackButton
 import app.wetube.core.tryOn
 import app.wetube.manage.db.HistoryDB
 import app.wetube.manage.db.VidDB
+import app.wetube.page.Bout
+import app.wetube.page.SettingsPage
+import app.wetube.page.VideoSettings
 import app.wetube.window.CekList
 
 
 private const val TITLE_TAG = "settingsActivityTitle"
 private const val MDI_TAG = "MDI"
 
-class Settings : PreferenceActivity()  {
+class Settings : Activity()  {
 
 
     private val db by lazy { VidDB(applicationContext) }
     private val hdb by lazy { HistoryDB(applicationContext) }
-    val mdi by lazy { LocalActivityManager(this, false) }
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menu?.add(0,4622,1,app.wetube.R.string.title_activity_pass)?.intent = Intent(this@Settings, PasswordSet::class.java)
-        return super.onCreateOptionsMenu(menu)
-    }
+    val sp get() = PreferenceManager.getDefaultSharedPreferences(this)
     override fun onCreate(savedInstanceState: Bundle?) {
         setupTheme()
         super.onCreate(savedInstanceState)
         showBackButton()
-        savedInstanceState?.getBundle("s")?.let {
-            mdi.dispatchCreate(it)
-        }
-
-    }
-
-
-    override fun onBuildHeaders(target: List<Header?>?) {
-        loadHeadersFromResource(R.xml.header, target)
-    }
-
-    override fun isValidFragment(fragmentName: String?): Boolean {
-        return true
-    }
-
-    fun old(){
-        window.decorView.apply {
-            alpha = 1F
-            rotation = 0F
-        }
-        if (preferenceScreen == null) {
-            addPreferencesFromResource(R.xml.set)
-        }
-        if(preferenceScreen != null) {
-            if (preferenceScreen.preferenceCount == 0) {
-                addPreferencesFromResource(R.xml.set)
-            }
-        }
-
-        findPreference("delhis")?.setOnPreferenceClickListener {
-            val l = hdb.listAsList()
-            if(l.isEmpty())return@setOnPreferenceClickListener true
-            val d = ProgressDialog(this).apply {
-                setMessage("Deleting...")
-                setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-                setCancelable(false)
-                progress = 0
-                max = l.size - 1
-                setOnDismissListener {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        this@Settings.window.decorView.pointerIcon = PointerIcon.getSystemIcon(context, PointerIcon.TYPE_ARROW)
-                    }
-                }
-                show()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    window?.decorView?.pointerIcon = PointerIcon.getSystemIcon(context, PointerIcon.TYPE_WAIT)
-                }
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                window.decorView.pointerIcon = PointerIcon.getSystemIcon(this, PointerIcon.TYPE_WAIT)
-            }
-            try{
-                Thread {
-                    l.forEach { i ->
-                        runOnUiThread {
-                            d.isIndeterminate = false
-                            d.progress = l.indexOf(i) + 1
-                            d.max = l.size - 1
-                            d.setMessage("Delete $i")
-                            hdb.deleteByName(i)
-                            Thread.sleep(1000L)
-                        }
-                        if (i == l.last()) {
-                            Handler(mainLooper).postDelayed({
-                                runOnUiThread {
-                                    d.dismiss()
-                                    l.clear()
-                                }
-                            }, 2000L)
-                        }
-                        tryOn{
-                            Thread.sleep(1000L)
+        actionBar?.also {
+            it.setDisplayShowTitleEnabled(resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+            it.navigationMode = ActionBar.NAVIGATION_MODE_TABS
+            it.addTab(
+                it.newTab()
+                    .setText(R.string.general)
+                    .setTabListener(object : ActionBar.TabListener{
+                        override fun onTabSelected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {
+                            ft?.replace(android.R.id.content, SettingsPage())
                         }
 
-                    }
-                }.start()
-            }catch(_:Exception){
-                Toast.makeText(this, "Error", Toast.LENGTH_SHORT).show()
-                d.dismiss()
-            }
+                        override fun onTabUnselected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {}
 
-            true
-        }
-        findPreference("rese")?.setOnPreferenceClickListener {
-            showDialog(4)
-            true
-        }
+                        override fun onTabReselected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {}
 
-        findPreference("versi")?.summary = getVersionName(this)
-        findPreference("vergen")?.summary = getVersionCode(this).toString()
-        findPreference("bylock")?.apply {
-            //if not using android 8.1
-            val d = (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O).also {
-                isEnabled = !it
-            }
-            if(d) {
-                summary = "This feature need android 8.1"
-            }
-            setOnPreferenceChangeListener { a, d->
-                val b = d as Boolean
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                    setShowWhenLocked(b)
-                    tryOn(true){
-                        intent.getBundleExtra("bun")?.getBinder("lil")?.let {
-                            if(it is MainActivity.LilInstance){
-                                it.me.setShowWhenLocked(b)
-                            }
+                    })
+            )
+            it.addTab(
+                it.newTab()
+                    .setText(R.string.title_activity_pass)
+                    .setTabListener(object : ActionBar.TabListener{
+                        override fun onTabSelected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {
+                            ft?.replace(android.R.id.content, PasswordSet())
                         }
-                    }
-                }
 
-                true
-            }
+                        override fun onTabUnselected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {}
+
+                        override fun onTabReselected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {}
+
+                    })
+            )
+            it.addTab(
+                it.newTab()
+                    .setText(R.string.title_activity_video)
+                    .setTabListener(object : ActionBar.TabListener{
+                        override fun onTabSelected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {
+                            ft?.replace(android.R.id.content, VideoSettings())
+                        }
+
+                        override fun onTabUnselected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {}
+
+                        override fun onTabReselected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {}
+
+                    })
+            )
+            it.addTab(
+                it.newTab()
+                    .setText(R.string.about)
+                    .setTabListener(object : ActionBar.TabListener{
+                        override fun onTabSelected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {
+                            ft?.replace(android.R.id.content, Bout())
+                        }
+
+                        override fun onTabUnselected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {}
+
+                        override fun onTabReselected(
+                            tab: ActionBar.Tab?,
+                            ft: FragmentTransaction?
+                        ) {}
+
+                    })
+            )
+            actionBar?.setSelectedNavigationItem(savedInstanceState?.getInt("page")?: 0)
         }
-
-
-        findPreference("theme")?.setOnPreferenceChangeListener { _, t->
-            flushThen{
-                restartHomePage()
-                recreate()
-            }
-            true
+        if(savedInstanceState == null){
+            
         }
-
-        findPreference("total")?.apply{
-            summary = try{
-                db.listAsList().size.toString()
-            }catch (_: Exception){
-                "0"
-            }
-        }
-        findPreference("f")?.customDialog
-        findPreference("cuco")?.customDialog
-        findPreference("res")?.setOnPreferenceClickListener { _->
-            showDialog(3)
-            true
-        }
-        findPreference("notch")?.isEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
-
     }
 
 
 
 
-    override fun onPostCreate(savedInstanceState: Bundle?) {
-        super.onPostCreate(savedInstanceState)
-    }
 
-
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        mdi.saveInstanceState()?.let{state->
-            outState.putBundle("s", state)
-        }
-    }
 
     override fun recreate() {
         restartHomePage()
@@ -298,14 +251,23 @@ class Settings : PreferenceActivity()  {
         super.onPrepareDialog(id, dialog, args)
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt("page", actionBar?.selectedNavigationIndex?:0)
+        super.onSaveInstanceState(outState)
+    }
+
 
 
 
 
     override fun onStart() {
         super.onStart()
+        cekLok()
+    }
+    
+    fun cekLok(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(PreferenceManager.getDefaultSharedPreferences(this).getBoolean("bylock", false))
+            setShowWhenLocked(sp.getBoolean("bylock", false))
         }
     }
 
@@ -315,10 +277,7 @@ class Settings : PreferenceActivity()  {
 
 
     override fun onResume() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(PreferenceManager.getDefaultSharedPreferences(this).getBoolean("bylock", false))
-        }
-        mdi.dispatchResume()
+        cekLok()
         super.onResume()
 
     }
@@ -363,23 +322,6 @@ class Settings : PreferenceActivity()  {
     }
 
 
-    override fun onPause() {
-        super.onPause()
-        mdi.dispatchPause(isFinishing)
-    }
-
-
-
-
-    override fun onStop() {
-        super.onStop()
-        mdi.dispatchStop()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        mdi.dispatchDestroy(isFinishing)
-    }
 
 
 

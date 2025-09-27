@@ -6,7 +6,9 @@ import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.preference.Preference
 import android.preference.PreferenceFragment
+import android.preference.PreferenceScreen
 import android.view.PointerIcon
 import android.widget.Toast
 import app.wetube.OutControlActivity
@@ -14,6 +16,7 @@ import app.wetube.R
 import app.wetube.core.tryOn
 import app.wetube.manage.db.HistoryDB
 import app.wetube.manage.db.VidDB
+import app.wetube.page.dialog.PreferenceDialogFragment
 
 
 class SettingsPage : PreferenceFragment() {
@@ -25,6 +28,20 @@ class SettingsPage : PreferenceFragment() {
     val cuspref by lazy { activity.getSharedPreferences("cuspref", Context.MODE_PRIVATE) }
 
 
+    override fun onPreferenceTreeClick(
+        preferenceScreen: PreferenceScreen?,
+        preference: Preference?
+    ): Boolean {
+        if(preference == null)return false
+        if(preference.fragment == null)return false
+        PreferenceDialogFragment().also {
+            it.arguments = Bundle().also { b->
+                b.putString(PreferenceDialogFragment.FNAME, preference.fragment)
+                b.putString(PreferenceDialogFragment.TITLE, preference.title.toString())
+            }
+        }.show(fragmentManager, "who")
+        return true
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (preferenceScreen == null) {
@@ -152,6 +169,10 @@ class SettingsPage : PreferenceFragment() {
     fun showDialog(id: Int){
         activity?.showDialog(id)
     }
+
+
+
+
 
 
 

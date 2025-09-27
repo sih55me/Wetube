@@ -51,6 +51,8 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.GlideDrawable
 import com.bumptech.glide.request.animation.GlideAnimation
 import com.bumptech.glide.request.target.SimpleTarget
+import com.squareup.picasso.Picasso
+import com.squareup.picasso.Target
 import kotlinx.coroutines.Runnable
 import java.io.File
 import java.io.FileOutputStream
@@ -430,58 +432,6 @@ class ChannelVideo:Fragment(), SearchAdap.OnAdapterListener {
 
 
 
-    private fun shareBitmap(vid:String):Intent{
-        val intent = Intent(Intent.ACTION_SEND)
-        Glide.with(activity!!!!)
-            .load("https://i.ytimg.com/vi/${vid}/hqdefault.jpg")
-            .centerCrop()
-            .error(R.drawable.cover_color)
-            .into<SimpleTarget<GlideDrawable>>(object : SimpleTarget<GlideDrawable>(0,0) {
-
-
-                override fun onResourceReady(
-                    resource: GlideDrawable?,
-                    glideAnimation: GlideAnimation<in GlideDrawable>?,
-                ) {
-                    val imagefolder = File(activity!!!!.cacheDir, "images")
-                    var uri: Uri? = null
-                    try {
-                        val d = resource!!
-                        imagefolder.mkdirs()
-                        val file = File(imagefolder, "shared_image.png")
-                        val outputStream = FileOutputStream(file)
-                        val bitmap = Bitmap.createBitmap(
-                            d.getIntrinsicWidth(),
-                            d.getIntrinsicHeight(), Bitmap.Config.ARGB_8888
-                        )
-                        val canvas = Canvas(bitmap)
-                        d.setBounds(0, 0, canvas.getWidth(), canvas.getHeight())
-                        d.draw(canvas)
-                        (bitmap).compress(Bitmap.CompressFormat.PNG, 90, outputStream)
-                        outputStream.flush()
-                        outputStream.close()
-                        uri = FileProvider.getUriForFile(activity!!!!, "app.wetube.image-share", file)
-                    } catch (e: Exception) {
-                        Toast.makeText(activity!!!!, e.message, Toast.LENGTH_LONG).show()
-                    }
-
-                    // putting uri of image to be shared
-                    intent.apply{
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        // adding text to share
-
-                        // Add subject Here
-                        putExtra(Intent.EXTRA_SUBJECT, "Subject Here")
-
-                        // setting type to image
-                        setType("image/png")
-
-                    }
-                }
-
-            })
-        return intent
-    }
 
     override fun tagChannel(channelDetail: ChannelDetail, newTab: Boolean) {
         val clipboard: ClipboardManager = activity!!.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager

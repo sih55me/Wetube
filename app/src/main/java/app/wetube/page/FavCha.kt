@@ -34,7 +34,6 @@ class FavCha():android.app.ListFragment(){
             setOnCreateContextMenuListener { menu, v, menuInfo ->
                 val l = db.listAsList()[(menuInfo as AdapterView.AdapterContextMenuInfo).position]
                 menu?.apply {
-                    setHeaderDividersEnabled(true)
                     setHeaderTitle(l.title)
                     add(getString(android.R.string.copy) + " id").setOnMenuItemClickListener {
                         val clipboard: ClipboardManager =
@@ -44,17 +43,14 @@ class FavCha():android.app.ListFragment(){
                         clipboard.setPrimaryClip(clip)
                         true
                     }
-                    add(R.string.del).setOnMenuItemClickListener {
-                        AlertDialog.Builder(activity!!).apply {
-                            setTitle(l.title)
-                            setMessage("Delete this channel from your favorite channels?")
-                            setPositiveButton(R.string.del) { _, _ ->
-                                db.deleteChaByName(l.title.toString())
-                                load()
-                            }
-                            setNegativeButton(android.R.string.cancel, null)
-                        }.show()
-                        true
+                    addSubMenu(R.string.del) .also{s->
+                        s.setHeaderTitle("Delete this?")
+                        s.add(R.string.del).setOnMenuItemClickListener {
+                            db.deleteChaByName(l.title.toString())
+                            load()
+                            true
+                        }
+                        s.add(android.R.string.cancel)
                     }
                 }
             }

@@ -72,7 +72,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|end"
-                android:layout_marginBottom="50dp"
+                android:layout_marginBottom="80dp"
                 android:drawableEnd="@drawable/next"
                 android:minWidth="110dp"
                 android:paddingEnd="15dp"
@@ -85,7 +85,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
-                android:layout_marginEnd="15dp">
+                android:layout_marginEnd="15dp"
+                android:fitsSystemWindows="true">
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -110,9 +111,8 @@
                         android:id="@+id/ntitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@color/video_color"
                         android:maxLines="1"
-                        android:shadowColor="?android:colorAccent"
+                        android:shadowColor="@color/video_color"
                         android:shadowDx="5"
                         android:shadowDy="5"
                         android:shadowRadius="10"
@@ -143,9 +143,11 @@
         <android.widget.Toolbar
             android:id="@+id/tul"
             android:layout_width="match_parent"
-            android:background="@drawable/actionbar_trans"
             android:titleTextAppearance="?android:textAppearanceMedium"
             android:subtitleTextAppearance="?android:textAppearanceSmall"
+            android:navigationIcon="@drawable/close"
+            android:logo="@drawable/video"
+            android:popupTheme="@android:style/Theme.DeviceDefault"
             android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
             android:layout_height="?android:actionBarSize">
 
@@ -158,7 +160,6 @@
 
         <RelativeLayout
             android:id="@+id/bottom"
-            android:background="@drawable/bottom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true">

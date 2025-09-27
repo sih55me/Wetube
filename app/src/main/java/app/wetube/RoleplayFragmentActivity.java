@@ -24,6 +24,7 @@ public class RoleplayFragmentActivity extends Activity {
         final FrameLayout f = new FrameLayout(this);
         f.setId(R.id.hal);
         setContentView(f);
+
         final String cl = getIntent().getStringExtra(FRAG_NAME);
         if(cl == null){
             throw new RuntimeException("Well well well, you not enter FRAG_NAME");

@@ -316,8 +316,13 @@ val Context.showAt : Display
 
 val Context.themeAlertDialog : Int get() {
     val outValue = TypedValue()
-    resources.newTheme()
-    getTheme().resolveAttribute(android.R.attr.alertDialogTheme, outValue, true)
+    theme.resolveAttribute(android.R.attr.alertDialogTheme, outValue, true)
+    return outValue.resourceId
+}
+
+val Context.themeDialog : Int get() {
+    val outValue = TypedValue()
+    theme.resolveAttribute(android.R.attr.dialogTheme, outValue, true)
     return outValue.resourceId
 }
 

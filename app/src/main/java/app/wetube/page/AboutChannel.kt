@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
@@ -26,14 +27,18 @@ import app.wetube.R
 import app.wetube.core.Search
 import app.wetube.core.dime
 import app.wetube.core.getBitmapFromView
+import app.wetube.core.info
 import app.wetube.core.tryOn
 import app.wetube.databinding.InfoBinding
 import app.wetube.page.dialog.PreviewImgPage
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.BitmapImageViewTarget
+import com.squareup.picasso.Picasso
+import com.squareup.picasso.Target
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.text.ifEmpty
 
 class AboutChannel: Fragment() {
     val binding by lazy { InfoBinding.inflate(activity!!!!.layoutInflater) }
@@ -44,6 +49,9 @@ class AboutChannel: Fragment() {
 
 
     private val dinfo = arrayListOf<String?>()
+
+
+    private var thumb = ""
 
 
     override fun onCreateView(
@@ -102,19 +110,7 @@ class AboutChannel: Fragment() {
             outState?.apply {
                 putString("info", binding.info.text.toString())
                 putStringArrayList("dinfo", dinfo)
-                val oSt = ByteArrayOutputStream()
-                val drawable = binding.icon.drawable
-                val bitmap = Bitmap.createBitmap(
-                    drawable.getIntrinsicWidth(),
-                    drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888
-                )
-                val canvas: Canvas = Canvas(bitmap)
-                drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight())
-                drawable.draw(canvas)
-                bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, oSt)
-                val bytes = oSt.toByteArray()
-                val encodedImg = Base64.encodeToString(bytes, Base64.DEFAULT)
-                putString("img", encodedImg)
+                putString("thumb", thumb)
             }
         }
     }
@@ -144,7 +140,13 @@ class AboutChannel: Fragment() {
                                 activity?.showDialog(
                                     PreviewImgPage.PREVIEW_IMAGE,
                                     Bundle().apply {
-                                        putBinder(PreviewImgPage.PREVIEW_CODE, PreviewImgPage.Get(it, arguments.getString("name").toString()))
+                                        putBinder(
+                                            PreviewImgPage.PREVIEW_CODE,
+                                            PreviewImgPage.Get(
+                                                it,
+                                                arguments.getString("name").toString()
+                                            )
+                                        )
                                     }
                                 )
                             }
@@ -309,31 +311,35 @@ class AboutChannel: Fragment() {
         if(savedInstanceState == null){
             if(!isInit){
                 Search(activity!!).findChannelById(idc, {
-
+                    thumb = it.thumbnail
                     tryOn {
-                        Glide.with(activity!!.baseContext)
-                            .load(it.thumbnail).asBitmap().centerCrop()
+                        Picasso.get()
+                            .load(thumb)
+                            .placeholder(R.drawable.profile)
                             .error(R.drawable.info)
-                            .into(object  : BitmapImageViewTarget(binding.icon) {
-                                override fun onLoadFailed(
+                            .into(object  : Target {
+
+                                override fun onBitmapLoaded(
+                                    bitmap: Bitmap?,
+                                    from: Picasso.LoadedFrom?
+                                ) {
+                                    binding.icon.setImageBitmap(bitmap)
+                                    activity?.setTaskDescription(ActivityManager.TaskDescription(arguments.getString("name").toString(), bitmap))
+                                    colorize(bitmap)
+                                }
+
+
+
+
+                                override fun onBitmapFailed(
                                     e: java.lang.Exception?,
                                     errorDrawable: Drawable?
                                 ) {
-                                    binding.icon.setImageToDefault()
+                                    info("Cannot load the profile")
                                 }
 
-                                override fun onLoadCleared(placeholder: Drawable?) {
+                                override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
                                     binding.icon.setImageToDefault()
-                                }
-
-
-                                override fun onLoadStarted(placeholder: Drawable?) {
-                                    binding.icon.setImageToDefault()
-                                }
-                                override fun setResource(resource: Bitmap?) {
-                                    super.setResource(resource)
-                                    activity?.setTaskDescription(ActivityManager.TaskDescription(arguments.getString("name").toString(), resource))
-                                    colorize(resource)
                                 }
                             })
                         val d = it.description.ifEmpty { "No information available" }
@@ -381,24 +387,40 @@ class AboutChannel: Fragment() {
             savedInstanceState.getStringArrayList("dinfo")?.let {
                 dinfo.addAll(it)
             }
-            savedInstanceState.getString("img").apply {
-                if(this == null) {
-                    return
-                }
-                Base64.decode(this, Base64.DEFAULT).apply {
-                    android.graphics.BitmapFactory.decodeByteArray(this, 0, this.size).let{resource->
-                        binding.icon.setImageBitmap(resource)
-                        colorize(resource)
-                        activity?.setTaskDescription(
-                            ActivityManager.TaskDescription(
-                                arguments.getString(
-                                    "name"
-                                ).toString(), resource
-                            )
-                        )
-                    }
-                }
+            thumb = savedInstanceState.getString("thumb")?: ""
+            thumb.let {
+                tryOn {
+                    Picasso.get()
+                        .load(it)
+                        .placeholder(R.drawable.profile)
+                        .error(R.drawable.info)
+                        .into(object  : Target {
 
+                            override fun onBitmapLoaded(
+                                bitmap: Bitmap?,
+                                from: Picasso.LoadedFrom?
+                            ) {
+                                binding.icon.setImageBitmap(bitmap)
+                                activity?.setTaskDescription(ActivityManager.TaskDescription(arguments.getString("name").toString(), bitmap))
+                                colorize(bitmap)
+                            }
+
+
+
+
+                            override fun onBitmapFailed(
+                                e: java.lang.Exception?,
+                                errorDrawable: Drawable?
+                            ) {
+                                info("Cannot load the profile")
+                            }
+
+                            override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+                                binding.icon.setImageToDefault()
+                            }
+                        })
+                    isInit = true
+                }
             }
 
         }

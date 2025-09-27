@@ -48,7 +48,7 @@
         android:allowBackup="true"
         android:appCategory="video"
         android:description="@string/library"
-        android:enableOnBackInvokedCallback="false"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:process="app.wetube"
@@ -64,7 +64,7 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:documentLaunchMode="never"
-            android:label="@string/title_activity_settings"
+            android:label="@string/set"
             tools:ignore="ExportedPreferenceActivity">
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
@@ -72,6 +72,13 @@
         </activity>
 
 
+        <activity
+            android:name=".SearchNResult"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:resizeableActivity="true"
+            android:autoRemoveFromRecents="true"
+            android:label="@string/title_activity_channel_info" />
 
 
 

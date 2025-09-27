@@ -33,6 +33,7 @@
 
                 <AutoCompleteTextView
                     android:id="@+id/query"
+                    android:imeOptions="flagNoExtractUi|flagNoFullscreen"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -83,6 +84,7 @@
                 <AutoCompleteTextView
                     android:id="@+id/channelId"
                     android:background="@null"
+                    android:imeOptions="flagNoExtractUi|flagNoFullscreen"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"

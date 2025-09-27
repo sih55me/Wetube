@@ -56,6 +56,16 @@ class Feedback:Fragment() {
         }
     }
 
+    override fun onPause() {
+        bin.web.onPause()
+        super.onPause()
+    }
+
+    override fun onResume() {
+        bin.web.onResume()
+        super.onResume()
+    }
+
     override fun onSaveInstanceState(outState: Bundle?) {
         super.onSaveInstanceState(outState)
         if (outState != null) {

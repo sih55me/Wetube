@@ -38,9 +38,6 @@
         android:visible="true"
         android:showAsAction="always" />
     <item
-        android:title="@string/select"
-        android:id="@+id/sel"/>
-    <item
         android:id="@+id/floating"
         android:title="Floating" />
 

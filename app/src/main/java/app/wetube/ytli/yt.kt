@@ -13,13 +13,16 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.annotation.VisibleForTesting
+import app.wetube.R
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayerBridge
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.YouTubePlayerListener
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.options.IFramePlayerOptions
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.toFloat
+import kotlinx.serialization.json.Json
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -73,13 +76,16 @@ class WTP @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
-) : WebView(context, attrs, defStyleAttr), YouTubePlayerBridge.YouTubePlayerBridgeCallbacks {
+) : WebView(context, attrs, defStyleAttr), YouTubePlayerBridge.YouTubePlayerBridgeCallbacks, Qwali.Callback {
 
     /** Constructor used by tools */
 
     private val _youTubePlayer = YouTubePlayerImpl3(this)
     val youtubePlayer: YouTubePlayer get() = _youTubePlayer
 
+    var qualityListener = fun(listQ:List<String>){
+
+    }
     private lateinit var youTubePlayerInitListener: (YouTubePlayer) -> Unit
 
     var isBackgroundPlaybackEnabled = false
@@ -172,17 +178,19 @@ class WTP @JvmOverloads constructor(
 
         settings.apply {
             javaScriptEnabled = true
-
+            domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
-            cacheMode = WebSettings.LOAD_DEFAULT
+
+            cacheMode = WebSettings.LOAD_NO_CACHE
         }
 
         addJavascriptInterface(YouTubePlayerBridge(this), "YouTubePlayerBridge")
+        addJavascriptInterface(Qwali(this), "Qwali")
 
-        val htmlPage = readHTMLFromUTF8File(resources.openRawResource(com.pierfrancescosoffritti.androidyoutubeplayer.R.raw.ayp_youtube_player))
+        val htmlPage = readHTMLFromUTF8File(resources.openRawResource(R.raw.yt))
             .replace("<<injectedPlayerVars>>", playerOptions.toString())
 
-        loadDataWithBaseURL("https://www.youtube.com"
+        loadDataWithBaseURL("https://${context.packageName}"
             , htmlPage, "text/html", "utf-8", null)
 
         webViewClient = object :WebViewClient(){
@@ -215,6 +223,14 @@ class WTP @JvmOverloads constructor(
     }
 
 
+    override fun onVideoQuality(instance: YouTubePlayer, quality: String) {
+
+        try{ qualityListener(Json.decodeFromString(quality)) }catch (_: Exception){
+            Toast.makeText(context,quality,0).show()
+        }
+
+    }
+
     override fun onWindowVisibilityChanged(visibility: Int) {
         if (isBackgroundPlaybackEnabled && (visibility == View.GONE || visibility == View.INVISIBLE)) {
             return
@@ -222,6 +238,9 @@ class WTP @JvmOverloads constructor(
 
         super.onWindowVisibilityChanged(visibility)
     }
+
+
+    override val yt: YouTubePlayer get() = getInstance()
 }
 
 @VisibleForTesting

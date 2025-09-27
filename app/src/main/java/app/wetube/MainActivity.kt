@@ -43,6 +43,7 @@ import android.view.inputmethod.BaseInputConnection
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.Toast
+import android.window.OnBackInvokedCallback
 import androidx.annotation.RequiresApi
 import app.wetube.core.FirstReview
 import app.wetube.core.hideBackButton
@@ -53,11 +54,13 @@ import app.wetube.core.isTv
 import app.wetube.core.setupTheme
 import app.wetube.core.showBackButton
 import app.wetube.core.toView
+import app.wetube.core.tryOn
 import app.wetube.databinding.ActivityMainBinding
 import app.wetube.page.DialogPass
 import app.wetube.page.FavCha
 import app.wetube.page.MySavedVideo
 import app.wetube.page.Search
+import app.wetube.page.dialog.SearchPeople
 import app.wetube.page.TabAction
 import app.wetube.page.dialog.NewVidDialog
 import app.wetube.page.dialog.PreviewImgPage
@@ -198,7 +201,10 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
     @SuppressLint("PrivateApi")
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menu?.apply {
-
+            add("Search Other Channel").setOnMenuItemClickListener {
+                SearchPeople().show(fragmentManager, "soc")
+                true
+            }
 
             add(R.string.set)?.setIcon(R.drawable.settings)
             if (isTv) {
@@ -345,6 +351,17 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
         } else {
             false
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            popBack = OnBackInvokedCallback {
+                mode?.finish()
+            }
+            tryOn {
+                onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                    0,
+                    popBack as OnBackInvokedCallback
+                )
+            }
+        }
         mode?.let { storeAm.add(it) }
         if(!isMashAndFloat){
             actionBar?.navigationMode = ActionBar.NAVIGATION_MODE_STANDARD
@@ -359,6 +376,13 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
         }
         if(!isMashAndFloat){
             mainPage()
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            tryOn {
+                onBackInvokedDispatcher.unregisterOnBackInvokedCallback(
+                    popBack as OnBackInvokedCallback
+                )
+            }
         }
         onBackStackChanged()
         mode?.let { storeAm.remove(it) }
@@ -391,9 +415,18 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
 
     fun checkNeedFullscreen(){
         val need = sp.getBoolean("main_fullscreen", false)
-        val flags =
-            View.SYSTEM_UI_FLAG_LOW_PROFILE or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-        window?.decorView?.systemUiVisibility = if(need) flags else 0
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if(need){
+                window.insetsController?.hide(WindowInsets.Type.systemBars())
+            } else{
+                window.insetsController?.show(WindowInsets.Type.systemBars())
+            }
+        }else{
+            val flags =
+                View.SYSTEM_UI_FLAG_LOW_PROFILE or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            window?.decorView?.systemUiVisibility = if(need) flags else 0
+        }
+
     }
 
 
@@ -573,9 +606,11 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
             val leftneed = sp.getBoolean("main_fullscreen_bleft", false)
             val rightneed = sp.getBoolean("main_fullscreen_bright", false)
             val nonotch = sp.getBoolean("main_fullscreen_notch", false).not()
-            val flags =
-                View.SYSTEM_UI_FLAG_LOW_PROFILE or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            window?.decorView?.systemUiVisibility = if(need) flags else 0
+            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.R){
+                val flags = View.SYSTEM_UI_FLAG_LOW_PROFILE or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                window?.decorView?.systemUiVisibility = if (need) flags else 0
+            }
+
             if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) and nonotch.not() or !need){
                 bin.hal.setOnApplyWindowInsetsListener(null)
             }
@@ -584,8 +619,9 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 window?.attributes?.layoutInDisplayCutoutMode  = if(nonotch) WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     window?.setDecorFitsSystemWindows(nonotch)
+
                     bin.hal.setOnApplyWindowInsetsListener { a,i->
-                        (a.layoutParams as FrameLayout.LayoutParams).apply {
+                        (a.layoutParams as ViewGroup.MarginLayoutParams).apply {
                             bottomMargin = i.systemWindowInsetBottom
                             if(leftneed){
                                 leftMargin = i.systemWindowInsetLeft
@@ -899,10 +935,19 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
             }
             VideoView.QR_DIALOG ->{
                 val t = args?.getString("txt") ?: return null
-                QRCodePage(this, t)
+                QRCodePage(this, t, true).apply {
+                    setOnDismissListener {
+                        removeDialog(id)
+                    }
+                }
+
             }
             PreviewImgPage.PREVIEW_IMAGE ->{
-                PreviewImgPage(this, args?.getBinder(PreviewImgPage.PREVIEW_CODE))
+                PreviewImgPage(this, args?.getBinder(PreviewImgPage.PREVIEW_CODE)).apply {
+                    setOnDismissListener {
+                        removeDialog(id)
+                    }
+                }
             }
             else ->  onCreateDialog(id)
         }

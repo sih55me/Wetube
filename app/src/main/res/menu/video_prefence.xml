@@ -2,10 +2,6 @@
 <menu xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android"
     tools:ignore="AppCompatResource">
-    <item android:title="Cast"
-        android:showAsAction="always"
-        android:actionProviderClass="android.app.MediaRouteActionProvider"
-        android:id="@+id/ces"/>
 
 
     <item
@@ -27,7 +23,6 @@
         android:title="PIP" />
     <item
         android:icon="@drawable/speed"
-        android:showAsAction="ifRoom"
         android:title="@string/speed">
         <menu>
             <group android:checkableBehavior="single">
@@ -70,6 +65,7 @@
         android:visible="false" />
     <item
         android:id="@+id/del_ic"
+        android:icon="@drawable/add"
         android:showAsAction="ifRoom"
         android:title="Add / Delete" />
     <item

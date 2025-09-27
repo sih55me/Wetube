@@ -50,6 +50,13 @@
             android:max="20"
             android:positiveButtonText="Set"
             android:title="Fast seek duraction" />
+
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:title="Using thumbnail as app color"
+            android:key="transColor"
+            android:icon="@drawable/video"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

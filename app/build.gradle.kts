@@ -16,8 +16,8 @@ android {
         applicationId = "app.wetube"
         minSdk = 22
         targetSdk = 34
-        versionCode = 23
-        versionName = "14.5"
+        versionCode = 24
+        versionName = "15"
     }
 
     buildTypes {
@@ -60,6 +60,7 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:3.3.0")
     implementation("com.github.amlcurran.showcaseview:library:5.4.3")
     implementation("com.android.support:palette-v7:28.0.0")
-
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation("com.squareup.picasso:picasso:2.71828")
 
 }
