@@ -9,92 +9,123 @@
         android:orientation="vertical">
 
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="4dp"
+            android:background="?android:colorBackground"
+            android:elevation="5dp"
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="10dp"
-            android:text="Scale X" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:text="Scale X" />
 
-        <ZoomControls
-            android:id="@+id/x"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <ZoomControls
+                android:id="@+id/x"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?android:colorBackground" />
+        </LinearLayout>
 
-        <View
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?android:attr/listDivider" />
+            android:layout_height="match_parent"
+            android:layout_marginBottom="4dp"
+            android:background="?android:colorBackground"
+            android:elevation="5dp"
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="10dp"
-            android:text="Scale X" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:text="Scale Y" />
 
-        <ZoomControls
-            android:id="@+id/y"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <ZoomControls
+                android:id="@+id/y"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?android:colorBackground" />
+        </LinearLayout>
 
-        <View
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?android:attr/listDivider" />
+            android:layout_height="match_parent"
+            android:layout_marginBottom="4dp"
+            android:background="?android:colorBackground"
+            android:elevation="5dp"
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="10dp"
-            android:text="Scale X &amp; Y" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:text="Scale X &amp; Y" />
 
-        <ZoomControls
-            android:id="@+id/xy"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            <ZoomControls
+                android:id="@+id/xy"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?android:colorBackground" />
+        </LinearLayout>
 
-        <View
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?android:attr/listDivider" />
+            android:layout_height="match_parent"
+            android:layout_marginBottom="4dp"
+            android:background="?android:colorBackground"
+            android:elevation="5dp"
+            android:orientation="vertical">
 
-        <TextView
-            style="?android:textAppearanceSmall"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:gravity="center_vertical"
-            android:paddingStart="10dp"
-            android:text="Position x" />
+            <TextView
+                style="?android:textAppearanceSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:gravity="center_vertical"
+                android:paddingStart="10dp"
+                android:text="Position x" />
 
-        <SeekBar
-            android:id="@+id/px"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:max="2000"
-            android:minHeight="40dp"
-            android:progress="1000" />
+            <SeekBar
+                android:id="@+id/px"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?android:colorBackground"
+                android:max="2000"
+                android:minHeight="40dp"
+                android:progress="1000" />
+        </LinearLayout>
 
-        <View
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?android:attr/listDivider" />
+            android:layout_height="match_parent"
+            android:layout_marginBottom="4dp"
+            android:background="?android:colorBackground"
+            android:elevation="5dp"
+            android:orientation="vertical">
 
-        <TextView
-            style="?android:textAppearanceSmall"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:gravity="center_vertical"
-            android:paddingStart="10dp"
-            android:text="Position y" />
-        <SeekBar
-            android:layout_width="match_parent"
-            android:id="@+id/py"
-            android:minHeight="40dp"
-            android:progress="1000"
-            android:max="2000"
-            android:layout_height="wrap_content"/>
+            <TextView
+                style="?android:textAppearanceSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:gravity="center_vertical"
+                android:paddingStart="10dp"
+                android:text="Position y" />
+
+            <SeekBar
+                android:id="@+id/py"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="?android:colorBackground"
+                android:max="2000"
+                android:minHeight="40dp"
+                android:progress="1000" />
+        </LinearLayout>
+
     </LinearLayout>
 
 

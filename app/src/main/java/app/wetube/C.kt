@@ -20,7 +20,7 @@ object C { //Properties
     const val REGION_CODE = "US"
     // -> Key
 
-    const val KEY = "-"
+    const val KEY = "AIzaSyDUzRy7GSObUJUeV4S_CmJiBE6GbnDcr7A"
 
 
 

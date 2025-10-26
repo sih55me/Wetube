@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Wetube</string>
+    <string name="app_name" translatable="false">52b</string>
     <string name="add">Add</string>
     <string name="example_add">Example : youtube.com/watch?v=vDAO7H5w4_I = vDAO7H5w4_I</string>
     <string name="set">Settings</string>
@@ -25,7 +25,7 @@
     <string name="pt1">Welcome to Wetube!</string>
     <string name="pt3">Awesome Full Features</string>
     <string name="pc3">The platform is equipped with various features designed to enhance your experience. Easily find interesting content using the advanced search feature. Personalize your experience with recommendations that suit your tastes. Access your content on various devices, anytime and anywhere.</string>
-    <string name="apr">Apperence</string>
+    <string name="apr">Appearance</string>
     <string name="adv">Advanced</string>
     <string name="appwidget_text" translatable="false">Thumbnail</string>
     <string name="add_widget">Add widget</string>
@@ -42,25 +42,17 @@
     <string name="vid_upd">Video updated!</string>
     <string name="vid_del">Video deleted!</string>
     <string name="no_vid">Nothing video to play</string>
-    <string name="title_activity_main_atv">Leanback MainATV</string>
-    <string name="browse_title">Videos by Your Company</string>
     <string name="related_movies">Related Videos</string>
-    <string name="grid_view">Grid View</string>
-    <string name="error_fragment">Error Fragment</string>
-    <string name="personal_settings">Personal Settings</string>
     <string name="watch_trailer_1">Watch</string>
     <string name="watch_trailer_2">FREE</string>
     <string name="rent_1">Rent By Day</string>
-    <string name="rent_2">From $1.99</string>
     <string name="buy_1">Buy and Own</string>
-    <string name="buy_2">AT $9.99</string>
     <string name="movie" translatable="false">Movie</string>
 
     <!-- Error messages -->
     <string name="error_fragment_message">An error occurred</string>
     <string name="dismiss_error">Dismiss</string>
     <string name="title_activity_pass">Password</string>
-    <string name="invalid_password">Password must be >5 characters</string>
     <string name="none">None</string>
     <string name="rating">Rating</string>
     <string name="date">Date</string>
@@ -72,7 +64,7 @@
     <string name="history_delete_all">Delete all</string>
     <string name="del_sel_vid">Delete selected video?</string>
     <string name="exit">Exit</string>
-    <string name="title_activity_channel_info">ChannelInfo</string>
+    <string name="title_activity_channel_info">Channel Info</string>
     <string name="tab_text_1" translatable="false">Tab 1</string>
     <string name="tab_text_2" translatable="false">Tab 2</string>
     <string name="general">General</string>
@@ -83,29 +75,13 @@
     <string name="my_profile">My Profile</string>
     <string name="dark_mode">Dark Mode</string>
     <string name="bar_visibility_label">Side/Bottom bar visibility label</string>
-    <string name="title_activity_settings">Settings</string>
 
-    <!-- Preference Titles -->
-    <string name="messages_header">Messages</string>
-    <string name="sync_header">Sync</string>
 
-    <!-- Messages Preferences -->
-    <string name="signature_title">Your signature</string>
-    <string name="reply_title">Default reply action</string>
-
-    <!-- Sync Preferences -->
-    <string name="sync_title">Sync email periodically</string>
-    <string name="attachment_title">Download incoming attachments</string>
-    <string name="attachment_summary_on">Automatically download attachments for incoming emails
-    </string>
-    <string name="attachment_summary_off">Only download attachments when manually requested</string>
     <string name="light">Light</string>
     <string name="dark">Dark</string>
     <string name="home">Home</string>
     <string name="history_search">History Search</string>
     <string name="history">History</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="undo">Undo</string>
     <string name="vid_add">Video added to!</string>
     <string name="theme">Theme</string>
@@ -114,13 +90,6 @@
     <string name="tovid">Total videos</string>
     <string name="storage">Storage</string>
 
-    <string name="lorem_ipsum_title">Lorem Ipsum"</string>
-    <string name="lorem_ipsum">Lorem Ipsum is simply placeholder text of the printing and
-        typesetting industry. Lorem Ipsum has been the industry\'s standard placeholder text ever
-        since the 1500s, when an unknown printer took a galley of type and scrambled it to make a
-        type specimen book"
-    </string>
-    <string name="fab_content_description">Represents a view to invoke an action</string>
     <string name="favcha">Favorite Channel</string>
     <string name="vefu">Enter Potrait Mode?</string>
     <string name="vefume">You\'ll enter fullscreen with Potrait Mode</string>
@@ -135,4 +104,5 @@
     <string name="vidtwe">Video Tweaks</string>
     <string name="clear">Clear</string>
     <string name="random_qs">Random Saved Video</string>
+    <string name="desc">Description</string>
 </resources>

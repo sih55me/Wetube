@@ -49,7 +49,10 @@
               width: '100%',
 
             events: {
-                onReady: function(event) { YouTubePlayerBridge.sendReady() },
+                onReady: function(event) {
+                 YouTubePlayerBridge.sendReady()
+                 hideVideoTitle()
+                 },
                   onStateChange: function(event) { sendPlayerStateChange(event.data) },
                   onPlaybackQualityChange: function(event) { YouTubePlayerBridge.sendPlaybackQualityChange(event.data) },
                   onPlaybackRateChange: function(event) { YouTubePlayerBridge.sendPlaybackRateChange(event.data) },
@@ -61,6 +64,47 @@
 
           });
         }
+
+        function hideVideoTitle() {
+          setInterval(() => {
+            const playerIFrame = document.querySelector("iframe");
+            if (!playerIFrame) {
+              return;
+            }
+
+            const frameDoc = playerIFrame.contentDocument;
+            if (!frameDoc) {
+              return;
+            }
+
+            const title = frameDoc.querySelector('.ytp-chrome-top');
+            if (title) {
+              title.style.display = 'none';
+            }
+          }, 100);
+        }
+
+
+        function hideTabletPopup() {
+          setInterval(() => {
+            const playerIFrame = document.querySelector("iframe");
+            if (!playerIFrame) {
+              return;
+            }
+
+            const frameDoc = playerIFrame.contentDocument;
+            if (!frameDoc) {
+              return;
+            }
+
+            const collection = frameDoc.getElementsByClassName("ytp-pause-overlay-container")[0];
+            if (!collection) {
+              return;
+            }
+            collection.style.display = 'none';
+          }, 100);
+        }
+
 
         function sendPlayerStateChange(playerState) {
           clearTimeout(timerId);
@@ -170,7 +214,7 @@
 
 
         function sendVideoQuality() {
-            Qwali.sendVideoQuality(JSON.stringify(player.getAvailableQualityLevels()))
+            Qwali.sendVideoQuality(player.getAvailableQualityLevels())
         }
 
         function setPlaybackQuality(playbackQuality) {

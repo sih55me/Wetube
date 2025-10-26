@@ -9,7 +9,7 @@
     <string name="nv">Judul videonya</string>
     <string name="nvi">Video id-nya</string>
     <string name="del_com">Hapus video ini?</string>
-    <string name="ul">Buka</string>
+    <string name="ul">Buka kunci</string>
     <string name="empty">Tidak ada video</string>
     <string name="sound">Suara</string>
     <string name="speed">Kecepatan</string>
@@ -90,5 +90,9 @@
     <string name="versi_name">Versi</string>
     <string name="select">Pilih</string>
     <string name="vidtwe">Pengaturan Video</string>
+    <string name="random_qs">Acak video tersimpan</string>
+    <string name="desc">Deskripsi</string>
+    <string name="clear">Bersihkan</string>
+    <string name="title_activity_channel_info">Informasi Saluran</string>
 
 </resources>

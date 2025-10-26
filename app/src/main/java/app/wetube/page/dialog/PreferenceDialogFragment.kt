@@ -1,5 +1,6 @@
 package app.wetube.page.dialog
 
+import android.app.ActionBar
 import android.app.AlertDialog
 import android.app.Dialog
 import android.app.DialogFragment
@@ -10,11 +11,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.Toolbar
 import app.wetube.R
 import app.wetube.core.getThemeId
 import app.wetube.core.isTablet
 import app.wetube.core.tryOn
 import app.wetube.page.Sheet
+import app.wetube.window.Paper
 
 open class PreferenceDialogFragment: DialogFragment() {
 
@@ -36,27 +39,18 @@ open class PreferenceDialogFragment: DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return if(activity?.isTablet == true){
-            object : AlertDialog(activity) {
-                override fun setContentView(view: View) {
-                    super.setView(view)
-                }
+        return object : Paper(activity) {
+            init {
+                setTitle(arguments?.getString(TITLE))
+            }
 
-            }
-        }else{
-            object : AlertDialog(activity,activity.getThemeId()) {
-                init {
-                    window?.setWindowAnimations(android.R.style.Animation_Dialog)
-                }
-                override fun setContentView(view: View) {
-                    super.setView(view)
+            override fun setupActionBar(actionBar: ActionBar) {
+                super.setupActionBar(actionBar)
+                showBackButton {
+                    this@PreferenceDialogFragment.onCancel(this)
                 }
             }
-        }.also {
-            it.setTitle(arguments?.getString(TITLE))
-            it.setButton(DialogInterface.BUTTON_POSITIVE,getString(android.R.string.ok)) { d, _ ->
-                d.cancel()
-            }
+
         }
     }
 

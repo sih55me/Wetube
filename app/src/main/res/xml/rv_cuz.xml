@@ -1,12 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <CheckBoxPreference
         android:defaultValue="false"
-        android:key="mute_rv"
+        android:key="mute_dreaming"
+        android:icon="@drawable/volume_off"
         android:title="Mute player" />
 
     <CheckBoxPreference
         android:defaultValue="false"
-        android:key="ao_rv"
-        android:title="Use audio instead video"/>
+        android:icon="@drawable/volume"
+        android:key="hearing_only_when_dreaming"
+        android:title="Hearing only"
+        android:summary="Use audio instead video"/>
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:icon="@drawable/swipe_left"
+        android:key="allergy_touch_when_dreaming"
+        android:title="Allergy with touch"
+        android:summary="Will wake up from dream when you touching the screen"/>
+
+
 </PreferenceScreen>

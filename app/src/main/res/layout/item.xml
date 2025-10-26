@@ -6,22 +6,18 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:descendantFocusability="blocksDescendants"
-    android:gravity="center"
     android:pointerIcon="hand"
-    android:background="?android:activatedBackgroundIndicator"
     android:transitionName="fade">
 
     <android.support.v7.widget.CardView
         android:layout_width="wrap_content"
         android:focusable="false"
         android:layout_margin="3dp"
-        android:foreground="?android:selectableItemBackground"
-        app:cardBackgroundColor="?android:colorBackground"
         android:clickable="false"
         android:layout_height="wrap_content">
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
 
 
             <app.wetube.widget.VideoSizeImageView
@@ -34,48 +30,59 @@
                 android:scaleType="centerCrop"
                 tools:src="@tools:sample/backgrounds/scenic[0]" />
 
-            <TextView
-                android:id="@+id/title"
-                android:checked="true"
-                style="?android:attr/titleTextAppearance"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/thumbnail"
-                android:textColor="?android:textColorPrimary"
-                android:layout_marginLeft="@dimen/album_title_padding"
                 android:layout_marginTop="5dp"
-                android:layout_marginRight="@dimen/album_title_padding"
-                android:singleLine="true"
-                android:text="New video"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/subtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/title"
                 android:layout_marginBottom="10dp"
-                android:layout_marginLeft="@dimen/album_title_padding"
-                android:layout_marginRight="@dimen/album_title_padding"
-                android:text="by ok"
-                android:textColor="?android:attr/colorControlNormal" />
+                android:layout_toStartOf="@+id/overflow"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/title"
+                    style="?android:attr/titleTextAppearance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/thumbnail"
+                    android:layout_marginLeft="@dimen/album_title_padding"
+                    android:layout_marginRight="@dimen/album_title_padding"
+                    android:checked="true"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:text="New video"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/subtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/title"
+
+                    android:layout_marginLeft="@dimen/album_title_padding"
+                    android:layout_marginRight="@dimen/album_title_padding"
+                    android:text="by ok"
+                    android:textColor="?android:attr/colorControlNormal" />
+
+            </LinearLayout>
 
             <ImageButton
                 android:id="@+id/overflow"
                 android:layout_width="45dp"
                 android:layout_height="40dp"
-                android:layout_alignParentLeft="true"
-                android:pointerIcon="context_menu"
-                android:layout_margin="2dp"
+                android:layout_margin="3dp"
                 android:padding="0dp"
-                android:tint="@color/white"
-                android:backgroundTint="#986D6D6D"
-                android:src="@drawable/arrow_drop"
+                android:layout_below="@id/thumbnail"
+                android:layout_alignParentEnd="true"
+                style="?android:actionOverflowButtonStyle"
                 android:contentDescription="@string/options"
                 android:focusable="false"
                 android:focusableInTouchMode="false"
                 tools:ignore="UseAppTint" />
+
+
 
             <CheckBox
                 android:id="@+id/check"
@@ -90,6 +97,9 @@
                 android:checked="false"
                 android:focusable="false"
                 android:focusableInTouchMode="false" />
+
+
+
 
         </RelativeLayout>
     </android.support.v7.widget.CardView>

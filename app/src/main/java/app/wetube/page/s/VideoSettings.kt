@@ -1,4 +1,4 @@
-package app.wetube.page
+package app.wetube.page.s
 
 import android.os.Build
 import android.os.Bundle

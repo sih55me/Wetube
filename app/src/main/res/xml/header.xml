@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
     <header
-        android:fragment="app.wetube.page.SettingsPage"
+        android:fragment="app.wetube.page.s.SettingsPage"
         android:title="@string/general" />
     <header
-        android:fragment="app.wetube.set.PasswordSet"
+        android:fragment="app.wetube.page.s.PasswordSet"
         android:summary="Use to save and change the behaviour"
         android:title="@string/title_activity_pass"/>
     <header
-        android:fragment="app.wetube.page.VideoSettings"
+        android:fragment="app.wetube.page.s.VideoSettings"
         android:summary="Use to customize behaviour"
         android:title="Video"/>
     <header

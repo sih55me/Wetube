@@ -24,7 +24,7 @@ import android.os.Handler
 import android.os.Looper
 import android.preference.PreferenceManager
 import android.provider.SearchRecentSuggestions
-import android.support.v4.content.FileProvider
+import app.wetube.manage.provide.FileProvider
 import android.text.SpannableStringBuilder
 import android.util.Log
 import android.view.ActionMode
@@ -49,7 +49,6 @@ import app.wetube.ActivityDialog
 import app.wetube.ChannelInfo
 import app.wetube.MainActivity
 import app.wetube.R
-import app.wetube.SearchNResult
 import app.wetube.adapter.HistoryAdapter
 import app.wetube.adapter.SearchAdap
 import app.wetube.adapter.SearchAdap.Option
@@ -61,6 +60,7 @@ import app.wetube.core.fadeOut
 import app.wetube.core.hideKeyBoard
 import app.wetube.core.info
 import app.wetube.core.isTv
+import app.wetube.core.tryOn
 import app.wetube.core.tryOut
 import app.wetube.core.tul
 import app.wetube.databinding.FragmentLsBinding
@@ -95,6 +95,7 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
     var showItem : (Boolean)-> Unit = {
 
     }
+    lateinit var smg : Search
 
     val f by lazy { FirstReview(activity) }
     var onSearch = false
@@ -116,7 +117,7 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-
+        smg = Search(activity)
     }
 
     val selLis = object : AbsListView.MultiChoiceModeListener{
@@ -252,6 +253,9 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
     val adap by lazy { SearchAdap(activity!!, ArrayList(), this) }
     override fun onDestroy() {
         super.onDestroy()
+        if(::smg.isInitialized){
+            tryOn{ smg.s() }
+        }
         titleBar = ""
     }
 
@@ -330,16 +334,6 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
                 }catch (_:Exception){}
             }
 
-        }
-        tryOut(activity!!) {
-
-            menu.findItem(R.id.app_bar_search).apply {
-                isVisible = true
-                setOnMenuItemClickListener {
-                    startActivityForResult(Intent(activity, SearchNResult::class.java), 50)
-                    true
-                }
-            }
         }
         super.onCreateOptionsMenu(menu, inflater)
     }
@@ -521,17 +515,13 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
         bin.insturcBtn.apply {
 
             setOnClickListener {
-                if(context.isTv){
-                    Bundle().apply {
-                        putString(QUERY, query)
-                        putString(CHANNELID, channelId)
-                        putBoolean(TOKEN, pT.isNotEmpty())
-                        putString(ORDER, filter)
-                    }.let {
-                        activity?.showDialog(MainActivity.DIALOG_SEARCH, it)
-                    }
-                }else{
-                    startActivityForResult(Intent(activity, SearchNResult::class.java), 50)
+                Bundle().apply {
+                    putString(QUERY, query)
+                    putString(CHANNELID, channelId)
+                    putBoolean(TOKEN, pT.isNotEmpty())
+                    putString(ORDER, filter)
+                }.let {
+                    activity?.showDialog(MainActivity.DIALOG_SEARCH, it)
                 }
             }
             setOnLongClickListener{
@@ -598,36 +588,6 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
             }
             search(query, channelId, true, filter)
         }
-        if(!f.isSearchFunctionReviewed and (activity != null)){
-            java.lang.Runnable{
-                val o = object : ShowCaseDialog.OnToBuild{
-                    override fun onToBuild(b: ShowcaseView.Builder) {
-                        b.setTarget(ViewTarget(bin.insturcBtn))
-                            .setContentTitle("Easy to search video with one click")
-                            .setContentText("Click \"Open search\" to open the searchbar")
-                    }
-
-                }
-                try{
-                    ShowCaseDialog(activity, o).apply {
-                        hasNext = true
-                        setOnDismissListener {
-                            f.isSearchFunctionReviewed = true
-                            activity?.actionBar?.setSelectedNavigationItem(2)
-                            activity?.fragmentManager?.findFragmentByTag("m").let {
-                                if (it is MySavedVideo) {
-                                    it.secIn()
-                                }
-                            }
-                        }
-                        show()
-                    }
-                }catch (_: Exception){}
-            }.let {
-                Handler(activity!!.mainLooper).postDelayed(it, 800L)
-            }
-
-        }
     }
 
 
@@ -668,9 +628,6 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
                 }catch (_:Exception){}
             } else {
                 titleBar = query
-                if(search != null){
-                    search!!.setQuery(query, false)
-                }
                 if(sp.getBoolean("clear_cache", false)){
                     deleteResult()
                 }
@@ -760,7 +717,7 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
                 val shareIntent = Intent()
                 when(type){
                     ShareType.URL -> {
-                        val stxt = "youtube.com/watch?v=${video.videoId}"
+                        val stxt = "https://youtube.com/watch?v=${video.videoId}"
                         shareIntent.action = Intent.ACTION_SEND
                         shareIntent.type = "text/plain"
                         shareIntent.putExtra(Intent.EXTRA_TEXT, stxt)
@@ -832,7 +789,7 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
                             setType("image/*")
 
                         }
-                        val stxt = "youtube.com/watch?v=${video.videoId}"
+                        val stxt = "https://youtube.com/watch?v=${video.videoId}"
                         shareIntent.action = Intent.ACTION_SEND
                         shareIntent.type = "text/plain"
                         shareIntent.putExtra(Intent.EXTRA_TEXT, stxt)
@@ -845,23 +802,10 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
             }
             Option.Save -> {
                 db.doing {
-                    if (db.listAsList().size < sp.getInt("limit", 50)) {
-
-                        db.insert(video.title, video.videoId)
-                        activity!!!!.runOnUiThread {
-                            Toast.makeText(activity!!!!,
-                                "Video added",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-
-                    }else Toast.makeText(activity!!!!,
-                        "Unable to add video",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-
-
+                    it.insert(video.title, video.videoId)
+                    activity!!!!.runOnUiThread {
+                        info("Video added",)
+                    }
                 }
 
             }
@@ -913,8 +857,10 @@ class Search() : Fragment(), SearchAdap.OnAdapterListener {
         }
         val sp = PreferenceManager.getDefaultSharedPreferences(activity!!)
         val list = (sp.getString("bc", "") ?: "").split(",").map { it.trim() }
-
-        Search(c).searchVideo(
+        if(!::smg.isInitialized){
+            smg = Search(c)
+        }
+        smg.searchVideo(
             query = query,
             max = 45,
             pT = pT,

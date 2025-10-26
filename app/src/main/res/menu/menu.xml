@@ -12,28 +12,27 @@
     <item
         android:id="@+id/app_bar_search"
         android:actionViewClass="android.widget.SearchView"
+        android:alphabeticModifiers="CTRL"
+        android:alphabeticShortcut=" "
         android:icon="?android:attr/actionModeWebSearchDrawable"
         android:orderInCategory="13"
-        android:alphabeticShortcut=" "
-        android:alphabeticModifiers="CTRL"
         android:showAsAction="always|collapseActionView"
         android:title="@android:string/search_go"
         tools:ignore="AppCompatResource" />
     <group
         android:orderInCategory="1">
         <item
-            android:id="@+id/shuffle"
-            android:icon="@drawable/shuffle"
-            android:showAsAction="ifRoom"
-            android:title="Shuffle"
-            android:visible="true" />
-        <item
             android:id="@+id/add"
-            android:icon="@drawable/add"
-            android:alphabeticShortcut="n"
             android:alphabeticModifiers="CTRL"
+            android:alphabeticShortcut="n"
+            android:icon="@drawable/add"
             android:showAsAction="ifRoom"
             android:title="@string/add"
+            android:visible="true" />
+        <item
+            android:id="@+id/shuffle"
+            android:icon="@drawable/shuffle"
+            android:title="Shuffle"
             android:visible="true" />
 
     </group>

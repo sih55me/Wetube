@@ -41,10 +41,9 @@ class New_vid : Activity() {
             finish()
         }
         dialogCon = NewVidDialog.new(this, bs)
+        savedInstanceState?.getBundle("n")?.let { dialogCon?.onRestoreInstanceState(it) }
         dialogCon?.show()
-        dialogCon?.showBackButton {
-            finish()
-        }
+        dialogCon
     }
 
 
@@ -60,10 +59,7 @@ class New_vid : Activity() {
         }
     }
 
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        super.onRestoreInstanceState(savedInstanceState)
-        savedInstanceState.getBundle("n")?.let { dialogCon?.onRestoreInstanceState(it) }
-    }
+
 
 
 

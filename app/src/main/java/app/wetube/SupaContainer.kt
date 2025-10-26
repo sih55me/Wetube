@@ -6,7 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.view.Window
+import android.view.WindowManager
 import android.webkit.WebView
 import android.widget.Toast
 
@@ -47,6 +49,7 @@ class SupaContainer:Application(){
         }
     }
 
+    val sp get() = PreferenceManager.getDefaultSharedPreferences(this)
     val mapA = mutableMapOf<String, Activity>()
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -63,6 +66,9 @@ class SupaContainer:Application(){
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
                 WebView.enableSlowWholeDocumentDraw()
+                if(sp.getBoolean("hardware_accelerated", true)){
+                    activity.window.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED)
+                }
             }
             override fun onActivityCreated(
                 activity: Activity,

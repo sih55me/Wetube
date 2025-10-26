@@ -4,8 +4,10 @@ import android.os.Bundle
 import android.preference.PreferenceActivity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.Window
 import app.wetube.R
 import app.wetube.core.setupTheme
+import app.wetube.core.showBackButton
 
 class RVSet: PreferenceActivity() {
 
@@ -14,21 +16,18 @@ class RVSet: PreferenceActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         setupTheme()
         super.onCreate(savedInstanceState)
+        showBackButton()
         addPreferencesFromResource(R.xml.rv_cuz)
-        actionBar?.apply {
-            title = getString(R.string.set)
-            subtitle = "For \"Some Random Video\""
-        }
+        title = "Dream video Settings"
+        actionBar?.subtitle = "Wetube > ${getString(R.string.set)} > Dream video Settings"
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menu?.let {
-            it.add(R.string.close).setIcon(R.drawable.close).setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_ALWAYS).setOnMenuItemClickListener {
-                finish()
-                true
-            }
-        }
-        return super.onCreateOptionsMenu(menu)
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(item.itemId == android.R.id.home)finish()
+        return super.onOptionsItemSelected(item)
     }
+
+
 
 }

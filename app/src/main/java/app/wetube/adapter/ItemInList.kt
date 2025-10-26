@@ -1,8 +1,10 @@
 package app.wetube.adapter
 
 import android.view.View
+import android.widget.ActionMenuView
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toolbar
 import app.wetube.R
 
 class ItemInList(val view: View) {
@@ -10,6 +12,7 @@ class ItemInList(val view: View) {
     val imageView: ImageView get() = view.findViewById(R.id.thumbnail)
     val subtitle: TextView get() = view.findViewById(R.id.subtitle)
     val more: View get() = view.findViewById<View>(R.id.overflow)
+    val menu: ActionMenuView? get() = view.findViewById(R.id.menu)
 
 
 }

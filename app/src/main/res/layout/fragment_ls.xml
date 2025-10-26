@@ -15,6 +15,10 @@
         android:layout_height="wrap_content">
 
         <GridView
+            android:verticalScrollbarPosition="left"
+            android:fastScrollEnabled="true"
+            android:fastScrollAlwaysVisible="true"
+            android:scrollbarStyle="insideInset"
             android:id="@+id/videos_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -59,7 +63,7 @@
 
                 <Button
                     android:id="@+id/insturcBtn"
-                    android:layout_width="280dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/empty_text"
                     android:layout_centerHorizontal="true"

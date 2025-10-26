@@ -5,6 +5,8 @@ import static app.wetube.core.SetTextColorKt.setTextColor;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.TypedArray;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
 
@@ -17,9 +19,21 @@ public class RestartDialog extends AlertDialog {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         setTitle("Restart the app?");
-        setButton(DialogInterface.BUTTON_NEGATIVE, getContext().getString(android.R.string.cancel), new Message());
-        setButton(DialogInterface.BUTTON_POSITIVE, setTextColor("Restart", "#EF0D0D"), (dialog, which) -> SupaContainer.Companion.restart());
+        String hexColor = String.format("#%06X", (0xFFFFFF & t()));
+        setButton(DialogInterface.BUTTON_NEGATIVE, getContext().getString(android.R.string.cancel), (dialog, which) -> {});
+        setButton(DialogInterface.BUTTON_POSITIVE, setTextColor("Restart", hexColor), (dialog, which) -> SupaContainer.Companion.restart());
+        super.onCreate(savedInstanceState);
+    }
+
+
+
+    int t(){
+        TypedArray array = getContext().obtainStyledAttributes(null, new int[]{android.R.attr.colorActivatedHighlight});
+        try {
+            return array.getColor(0, 0);
+        } finally {
+            array.recycle();
+        }
     }
 }

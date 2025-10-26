@@ -2,13 +2,9 @@ package app.wetube.set
 
 import android.app.ActionBar
 import android.app.Activity
-import android.app.ActivityManager
-import android.app.AlertDialog
 import android.app.Dialog
 import android.app.Fragment
 import android.app.FragmentTransaction
-import android.app.LocalActivityManager
-import android.app.ProgressDialog
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Binder
@@ -17,30 +13,26 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.preference.Preference
-import android.preference.PreferenceActivity
 import android.preference.PreferenceManager
 import android.preference.PreferenceScreen
 import android.view.Menu
 import android.view.MenuItem
-import android.view.PointerIcon
 import android.widget.ListView
-import android.widget.Toast
-import app.wetube.MainActivity
 import app.wetube.OutControlActivity
 import app.wetube.R
-import app.wetube.SupaContainer
 import app.wetube.core.getVersionCode
 import app.wetube.core.getVersionName
 import app.wetube.core.isTablet
-import app.wetube.core.setTextColor
 import app.wetube.core.setupTheme
 import app.wetube.core.showBackButton
 import app.wetube.core.tryOn
 import app.wetube.manage.db.HistoryDB
 import app.wetube.manage.db.VidDB
-import app.wetube.page.Bout
-import app.wetube.page.SettingsPage
-import app.wetube.page.VideoSettings
+import app.wetube.page.s.SettingsPage
+import app.wetube.page.s.VideoSettings
+import app.wetube.page.dialog.ResetDialog
+import app.wetube.page.dialog.RestartDialog
+import app.wetube.page.s.PasswordSet
 import app.wetube.window.CekList
 
 
@@ -50,6 +42,7 @@ private const val MDI_TAG = "MDI"
 class Settings : Activity()  {
 
 
+    val pg = listOf("general","pass","vid")
     private val db by lazy { VidDB(applicationContext) }
     private val hdb by lazy { HistoryDB(applicationContext) }
     val sp get() = PreferenceManager.getDefaultSharedPreferences(this)
@@ -57,6 +50,24 @@ class Settings : Activity()  {
         setupTheme()
         super.onCreate(savedInstanceState)
         showBackButton()
+        val p = fun(i: String): Fragment{
+            return fragmentManager.findFragmentByTag(i)
+        }
+        val f :List<Fragment>
+        val t = fragmentManager.beginTransaction()
+        if(savedInstanceState == null){
+            f = listOf(SettingsPage(), PasswordSet(), VideoSettings())
+            t
+                .add(android.R.id.content, f[0], pg[0])
+                .add(android.R.id.content, f[1], pg[1])
+                .add(android.R.id.content, f[2], pg[2])
+        }else{
+            f = pg.map { p(it) }
+        }
+        for(i in f){
+            t.detach(i)
+        }
+        t.commit()
         actionBar?.also {
             it.setDisplayShowTitleEnabled(resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
             it.navigationMode = ActionBar.NAVIGATION_MODE_TABS
@@ -68,18 +79,23 @@ class Settings : Activity()  {
                             tab: ActionBar.Tab?,
                             ft: FragmentTransaction?
                         ) {
-                            ft?.replace(android.R.id.content, SettingsPage())
+                            ft?.attach(f[0])
+
                         }
 
                         override fun onTabUnselected(
                             tab: ActionBar.Tab?,
                             ft: FragmentTransaction?
-                        ) {}
+                        ) {
+                            ft?.detach(f[0])
+                        }
 
                         override fun onTabReselected(
                             tab: ActionBar.Tab?,
                             ft: FragmentTransaction?
-                        ) {}
+                        ) {
+
+                        }
 
                     })
             )
@@ -91,13 +107,15 @@ class Settings : Activity()  {
                             tab: ActionBar.Tab?,
                             ft: FragmentTransaction?
                         ) {
-                            ft?.replace(android.R.id.content, PasswordSet())
+                            ft?.attach(f[1])
                         }
 
                         override fun onTabUnselected(
                             tab: ActionBar.Tab?,
                             ft: FragmentTransaction?
-                        ) {}
+                        ) {
+                            ft?.detach(f[1])
+                        }
 
                         override fun onTabReselected(
                             tab: ActionBar.Tab?,
@@ -114,36 +132,15 @@ class Settings : Activity()  {
                             tab: ActionBar.Tab?,
                             ft: FragmentTransaction?
                         ) {
-                            ft?.replace(android.R.id.content, VideoSettings())
+                            ft?.attach(f[2])
                         }
 
                         override fun onTabUnselected(
-                            tab: ActionBar.Tab?,
-                            ft: FragmentTransaction?
-                        ) {}
-
-                        override fun onTabReselected(
-                            tab: ActionBar.Tab?,
-                            ft: FragmentTransaction?
-                        ) {}
-
-                    })
-            )
-            it.addTab(
-                it.newTab()
-                    .setText(R.string.about)
-                    .setTabListener(object : ActionBar.TabListener{
-                        override fun onTabSelected(
                             tab: ActionBar.Tab?,
                             ft: FragmentTransaction?
                         ) {
-                            ft?.replace(android.R.id.content, Bout())
+                            ft?.detach(f[2])
                         }
-
-                        override fun onTabUnselected(
-                            tab: ActionBar.Tab?,
-                            ft: FragmentTransaction?
-                        ) {}
 
                         override fun onTabReselected(
                             tab: ActionBar.Tab?,
@@ -152,11 +149,13 @@ class Settings : Activity()  {
 
                     })
             )
-            actionBar?.setSelectedNavigationItem(savedInstanceState?.getInt("page")?: 0)
         }
-        if(savedInstanceState == null){
-            
-        }
+    }
+
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        super.onPostCreate(savedInstanceState)
+        actionBar?.setSelectedNavigationItem(savedInstanceState?.getInt("page")?: 0)
     }
 
 
@@ -212,6 +211,16 @@ class Settings : Activity()  {
         fun whenList(l: ListView){
             p.bind(l)
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        if(menu == null)return false
+        menu.add("Dream video settings").intent = Intent(this, RVSet::class.java)
+        menu.addSubMenu("About").also{
+            it.add("Version : ${getVersionName(this)}")
+            it.add("Gen ver. : ${getVersionCode(this)}")
+        }
+        return super.onCreateOptionsMenu(menu)
     }
 
     override fun onCreateDialog(id: Int, args: Bundle?): Dialog? {
@@ -301,22 +310,8 @@ class Settings : Activity()  {
 
     override fun onCreateDialog(id: Int): Dialog? {
         return when(id){
-            3 -> AlertDialog.Builder(this)
-                .setMessage("Restart the app?")
-                .setNegativeButton(getString(android.R.string.cancel),null)
-                .setPositiveButton(setTextColor("Restart", "#EF0D0D")){ _, _->
-                    SupaContainer.Companion.restart()
-                }.create()
-            4 -> AlertDialog.Builder(this).apply {
-                setTitle("Reset the app data?")
-            setMessage("If you reset the app data, your saved preference, saved videos, and history will be deleted.")
-                setPositiveButton("Reset") { _, _ ->
-                    try {
-                        (getSystemService(ACTIVITY_SERVICE) as ActivityManager).clearApplicationUserData()
-                    }catch (_: Exception){}
-                }
-                setNegativeButton(android.R.string.cancel, null)
-            }.create()
+            3 -> RestartDialog(this)
+            4 -> ResetDialog(this)
             else -> super.onCreateDialog(id)
         }
     }

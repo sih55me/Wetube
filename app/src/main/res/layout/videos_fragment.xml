@@ -13,13 +13,17 @@
         android:layout_height="wrap_content">
 
         <GridView
-            android:scrollbarStyle="outsideOverlay"
+            android:fadeScrollbars="true"
+            android:fastScrollStyle="@android:style/Widget.DeviceDefault.FastScroll"
+            android:fastScrollAlwaysVisible="true"
             android:id="@+id/videos_list"
-            android:fastScrollEnabled="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clipToPadding="true"
+            android:fastScrollEnabled="true"
+            android:scrollbarStyle="outsideInset"
             tools:itemCount="11"
+            android:verticalScrollbarPosition="left"
             tools:listitem="@layout/item" />
 
         <ScrollView
@@ -27,6 +31,7 @@
             android:layout_width="match_parent"
             android:fillViewport="false"
             android:pointerIcon="no_drop"
+            android:background="?android:colorBackground"
             android:layout_height="match_parent"
             android:visibility="gone">
 
@@ -50,13 +55,26 @@
                 <TextView
                     android:id="@+id/empty_text"
                     style="?android:textAppearanceLarge"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
+                    android:textColor="?android:attr/colorAccent"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/image_add"
                     android:layout_margin="16dp"
                     android:gravity="center"
+                    android:layout_centerInParent="true"
                     android:text="@string/empty"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/summ"
+                    android:layout_centerInParent="true"
+                    style="?android:textAppearanceSmall"
+                    android:layout_width="wrap_content"
+                    android:textColor="?android:attr/colorActivatedHighlight"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/empty_text"
+                    android:gravity="center"
+                    android:text="Try add video from external (like Youtube) or from 'Explore' Tab"/>
             </RelativeLayout>
         </ScrollView>
 

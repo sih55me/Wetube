@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.os.Build
-import android.support.v4.app.NotificationCompat
 import android.util.Log
 import app.wetube.ActivityDialog
 import app.wetube.C
@@ -22,6 +21,7 @@ import org.json.JSONObject
 import java.net.URLEncoder
 
 class Search(val activity : Activity) {
+    val requestQueue = Volley.newRequestQueue(activity.applicationContext)
     companion object{
         //ORDER VALUE
         const val DATE = "date"
@@ -34,6 +34,9 @@ class Search(val activity : Activity) {
         const val MODERATE = "moderate"
         const val STRICT = "strict"
     }
+
+
+    fun s()=requestQueue.stop()
     fun searchVideo(
         query:String ="",
         channelId:String="",
@@ -45,7 +48,7 @@ class Search(val activity : Activity) {
         onDone:((String)->Unit) = {}
     ){
 
-        val requestQueue = Volley.newRequestQueue(activity.applicationContext)
+
         var urlT = "${C.BASE_URL}search?part=snippet&q=${URLEncoder.encode(query, "UTF-8")}&type=video&key=${KEY}&maxResults=$max&safeSearch=$safeSearch&videoEmbeddable=true"
         if(channelId.isNotEmpty()){
             urlT += "&channelId=$channelId"
@@ -129,8 +132,6 @@ class Search(val activity : Activity) {
         onGet : ((ChannelDetail) -> Unit) = {},
         onDone:((String)->Unit) = {}
     ){
-
-        val requestQueue = Volley.newRequestQueue(activity.applicationContext)
         var urlT = "${C.BASE_URL}search?part=snippet&q=${URLEncoder.encode(query, "UTF-8")}&type=channel&key=${KEY}&maxResults=$max&safeSearch=$safeSearch#"
         if(pT.isNotEmpty()){
             urlT += "&pageToken=$pT"
@@ -199,7 +200,6 @@ class Search(val activity : Activity) {
         onGet : ((ChannelDetail) -> Unit) = {},
         onDone:(()->Unit) = {}
     ){
-        val requestQueue = Volley.newRequestQueue(activity.applicationContext)
         val urlT = "https://www.googleapis.com/youtube/v3/channels?part=snippet&id=$id&key=$KEY"
         val stringRequest = StringRequest(Request.Method.GET, urlT, {
             try {
@@ -246,8 +246,6 @@ class Search(val activity : Activity) {
         requestQueue.add(stringRequest)
     }
     private fun error(activity:Activity, message:String){
-        val notifMan = activity.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val n = NotificationCompat.Builder(activity.applicationContext, "2")
         val i = object  :ActivityDialog.DialogCallback(){
             override fun onMakeButton(buttons: ActivityDialog.ButtonDialog) {
                 buttons.setPositive ("Dismiss"){ d,_->
@@ -256,24 +254,7 @@ class Search(val activity : Activity) {
             }
         }
 
-        n.apply {
-            setStyle(
-                NotificationCompat.BigTextStyle().bigText(message)
-            )
-            setAutoCancel(true)
-            setContentIntent(PendingIntent.getActivity(activity, 1, ActivityDialog.pack(activity, "Error", message, i), PendingIntent.FLAG_IMMUTABLE))
-            setContentText(message)
-            setContentTitle("Error in search@wetube")
-            setSmallIcon(android.R.drawable.ic_dialog_alert)
-            priority = NotificationCompat.PRIORITY_LOW
-        }
+        PendingIntent.getActivity(activity, 1, ActivityDialog.pack(activity, "Error", message, i), PendingIntent.FLAG_IMMUTABLE).send()
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-            val c =  NotificationChannel("2", "Other", NotificationManager.IMPORTANCE_HIGH)
-            notifMan.createNotificationChannel(c)
-            n.setChannelId("2")
-            n.priority = NotificationCompat.PRIORITY_LOW
-        }
-        notifMan.notify(1, n.build())
     }
 }

@@ -5,8 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="5dp">
+    android:orientation="vertical">
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -19,39 +18,58 @@
 
             <TextView
                 android:id="@+id/textView3"
+                android:elevation="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="?android:colorBackground"
                 style="?android:textAppearanceSearchResultSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="8dp"
                 android:text="@string/example_add" />
 
-            <EditText
-                android:id="@+id/editTextText3"
+            <LinearLayout
+                android:orientation="vertical"
+                android:elevation="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="?android:colorBackground"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="3dp"
-                android:ems="10"
-                android:hint="@string/nv"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:minHeight="48dp"
-                android:padding="12dp"
-                android:text="@string/title_activity_video"
-                tools:ignore="VisualLintTextFieldSize" />
+                android:layout_height="wrap_content">
+                <EditText
+                    android:id="@+id/editTextText3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:layout_margin="3dp"
+                    android:hint="@string/nv"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:minHeight="48dp"
+                    android:padding="12dp"
+                    android:text="@string/title_activity_video"
+                    tools:ignore="VisualLintTextFieldSize" />
 
 
-            <EditText
-                android:id="@+id/editTextText4"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="3dp"
-                android:ems="10"
-                android:hint="@string/nvi"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:minHeight="48dp"
-                android:padding="12dp"
-                tools:ignore="VisualLintTextFieldSize" />
+                <EditText
+                    android:id="@+id/editTextText4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:layout_margin="3dp"
+                    android:hint="@string/nvi"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:minHeight="48dp"
+                    android:padding="12dp"
+                    tools:ignore="VisualLintTextFieldSize" />
+
+                <Button
+                    android:id="@+id/edit_btn"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Convert to id" />
+            </LinearLayout>
+
 
 
             <TextView
@@ -59,16 +77,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="8dp"
-                android:text="After your filled the video title &amp; id, click at the appbar to adding the video" />
+                android:elevation="5dp"
+                android:drawablePadding="15dp"
+                android:drawableStart="@drawable/info"
+                android:layout_marginBottom="5dp"
+                android:background="?android:colorBackground"
+                android:text="After your filled the video title &amp; id, click the check mark at the left top to adding the video" />
 
 
-            <Button
-                android:id="@+id/edit_btn"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Convert to id"
-                android:visibility="gone" />
+
         </LinearLayout>
     </FrameLayout>
 </ScrollView>

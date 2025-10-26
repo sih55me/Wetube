@@ -11,15 +11,7 @@
         android:showAsAction="always"
         android:title="@string/order"
         android:visible="false" />
-    <item
-        android:id="@+id/app_bar_search"
-        android:icon="@drawable/search"
-        android:orderInCategory="2"
-        android:showAsAction="always"
-        android:alphabeticShortcut=" "
-        android:alphabeticModifiers="CTRL"
-        android:title="@android:string/search_go"
-        tools:ignore="AppCompatResource" />
+
 
     <item
         android:id="@+id/manage"
@@ -63,9 +55,10 @@
         android:visible="false" />
     <item
         android:id="@+id/cusSea"
-        android:icon="@drawable/go"
+        android:showAsAction="ifRoom"
+        android:icon="@drawable/search"
         android:orderInCategory="2"
         android:alphabeticShortcut=" "
-        android:alphabeticModifiers="CTRL|ALT"
-        android:title="Custom Search" />
+        android:alphabeticModifiers="CTRL"
+        android:title="Request" />
 </menu>

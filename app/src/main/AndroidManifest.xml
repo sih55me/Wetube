@@ -54,7 +54,7 @@
         android:process="app.wetube"
         android:resizeableActivity="true"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:hardwareAccelerated="true"
+        android:hardwareAccelerated="false"
         android:usesCleartextTraffic="true"
         tools:ignore="UnusedAttribute">
 
@@ -72,15 +72,6 @@
         </activity>
 
 
-        <activity
-            android:name=".SearchNResult"
-            android:exported="false"
-            android:launchMode="singleTop"
-            android:resizeableActivity="true"
-            android:autoRemoveFromRecents="true"
-            android:label="@string/title_activity_channel_info" />
-
-
 
         <activity
             android:name=".ChannelInfo"
@@ -96,9 +87,6 @@
             android:exported="false" />
 
 
-        <activity
-            android:name=".MenuActivity"
-            android:exported="true" />
         <activity
             android:name=".ActivityDialog"
             android:exported="true"
@@ -225,12 +213,12 @@
 
 
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="app.wetube.manage.provide.FileProvider"
             android:authorities="app.wetube.image-share"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:name="com.wiwolf.LOVETOSHARE"
                 android:resource="@xml/fileprovider" />
         </provider>
     </application>

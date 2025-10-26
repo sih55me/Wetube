@@ -11,13 +11,14 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?android:attr/listDivider" />
+
+
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:background="?android:attr/colorBackground"
+            android:elevation="5dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -33,43 +34,35 @@
 
                 <AutoCompleteTextView
                     android:id="@+id/query"
-                    android:imeOptions="flagNoExtractUi|flagNoFullscreen"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:background="@null"
+                    android:imeOptions="flagNoExtractUi|flagNoFullscreen"
                     android:padding="12dp" />
             </LinearLayout>
 
-            <View
-                android:id="@+id/divider5"
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="?android:attr/listDivider" />
 
             <ImageButton
-                android:layout_width="wrap_content"
                 android:id="@+id/openq"
-                android:pointerIcon="hand"
-                android:tooltipText="@string/history_search"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
                 android:minWidth="50dp"
                 android:minHeight="50dp"
-                android:background="?android:selectableItemBackground"
-                android:src="@drawable/arrow_drop"
-                android:layout_gravity="center_vertical"
-                android:layout_height="match_parent"/>
+                android:pointerIcon="hand"
+                android:src="@drawable/history"
+                android:tooltipText="@string/history_search" />
         </LinearLayout>
 
 
-        <View
-            android:id="@+id/divider7"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?android:attr/listDivider" />
-
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:background="?android:attr/colorBackground"
+            android:elevation="5dp">
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -81,48 +74,40 @@
                     android:layout_height="wrap_content"
                     android:paddingStart="12dp"
                     android:text="Channel Id" />
+
                 <AutoCompleteTextView
                     android:id="@+id/channelId"
                     android:background="@null"
-                    android:imeOptions="flagNoExtractUi|flagNoFullscreen"
+                    android:inputType="textFilter|textNoSuggestions|textAutoComplete"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+
+                    android:imeOptions="flagNoExtractUi|flagNoFullscreen"
                     android:padding="12dp" />
             </LinearLayout>
 
 
-            <View
-                android:id="@+id/divider6"
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="?android:attr/listDivider" />
-
             <ImageButton
-                android:layout_width="wrap_content"
                 android:id="@+id/openc"
-                android:tooltipText="@string/favcha"
-                android:minWidth="50dp"
-                android:pointerIcon="hand"
-                android:minHeight="50dp"
-                android:background="?android:selectableItemBackground"
-                android:src="@drawable/arrow_drop"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_gravity="center_vertical"
-                android:layout_height="match_parent"/>
+                android:minWidth="50dp"
+                android:minHeight="50dp"
+                android:pointerIcon="hand"
+                android:src="@drawable/favcha"
+                android:tooltipText="@string/favcha" />
         </LinearLayout>
 
 
-
-
-        <View
-            android:id="@+id/divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?android:attr/listDivider" />
-
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:background="?android:attr/colorBackground"
+            android:elevation="5dp">
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -134,50 +119,36 @@
                     android:layout_height="wrap_content"
                     android:paddingStart="12dp"
                     android:text="@string/order" />
+
                 <Spinner
                     android:id="@+id/order"
                     android:layout_width="match_parent"
-                    android:background="@null"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    tools:listitem="@android:layout/simple_list_item_1"
-                    android:layout_height="wrap_content"/>
+                    tools:listitem="@android:layout/simple_list_item_1" />
             </LinearLayout>
 
 
-            <View
-                android:id="@+id/divider8"
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="?android:attr/listDivider" />
-
-            <ImageButton
-                android:id="@+id/openo"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:tooltipText="@string/order"
-                android:layout_gravity="center_vertical"
-                android:pointerIcon="hand"
-                android:background="?android:selectableItemBackground"
-                android:minWidth="50dp"
-                android:minHeight="50dp"
-                android:src="@drawable/arrow_drop" />
         </LinearLayout>
 
 
 
 
-        <View
-            android:id="@+id/divider2"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="?android:attr/listDivider" />
-
-        <Button
-            android:id="@+id/cf"
+        <AbsoluteLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:pointerIcon="hand"
-            android:text="Clear All Field" />
+            android:layout_marginBottom="5dp"
+            android:elevation="5dp"
+            android:background="?android:attr/colorBackground">
+            <Button
+                android:id="@+id/cf"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:pointerIcon="hand"
+                style="?android:borderlessButtonStyle"
+                android:text="Clear All Field" />
+        </AbsoluteLayout>
+
 
 
     </LinearLayout>

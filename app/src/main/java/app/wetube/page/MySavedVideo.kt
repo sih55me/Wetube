@@ -1,7 +1,9 @@
 package app.wetube.page
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.AlertDialog
+import android.app.Dialog
 import android.app.Fragment
 import android.content.DialogInterface
 import android.content.Intent
@@ -15,7 +17,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.preference.PreferenceManager
-import android.support.v4.content.FileProvider
+import app.wetube.manage.provide.FileProvider
 import android.util.Log
 import android.view.ActionMode
 import android.view.LayoutInflater
@@ -50,10 +52,6 @@ import app.wetube.manage.db.VidDB
 import app.wetube.openVideo
 import app.wetube.page.dialog.NewVidDialog
 import app.wetube.page.dialog.ShowCaseDialog
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.drawable.GlideDrawable
-import com.bumptech.glide.request.animation.GlideAnimation
-import com.bumptech.glide.request.target.SimpleTarget
 import com.cocosw.undobar.UndoBarStyle
 import com.github.amlcurran.showcaseview.ShowcaseView
 import com.github.amlcurran.showcaseview.targets.ViewTarget
@@ -289,40 +287,25 @@ class MySavedVideo :
                 return true
             }
         })
-        if(!sp.getBoolean("forceWeIcon", false)){
-            if(sp.getString("theme", "w") != "w"){
-                s.setIcon(android.R.drawable.ic_menu_search)
-            }
-        }
+
         try {
-            (s.actionView as SearchView).apply {
-                queryHint = getString(android.R.string.search_go)
-                setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                    override fun onQueryTextSubmit(query: String): Boolean {
-                        findOut(query)
-                        return true
-                    }
-
-                    override fun onQueryTextChange(newText: String): Boolean {
-                        return true
-                    }
-                })
-            }
+            (s.actionView as SearchView)
         }catch (_:Exception){
-            SearchView(activity!!).apply {
-                queryHint = getString(android.R.string.search_go)
-                setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                    override fun onQueryTextSubmit(query: String): Boolean {
-                        findOut(query)
-                        return true
-                    }
-
-                    override fun onQueryTextChange(newText: String): Boolean {
-                        return true
-                    }
-                })
-                s.actionView = this
+            SearchView(activity!!).also {
+                s.actionView = it
             }
+        }.apply {
+            queryHint = getString(android.R.string.search_go)
+            setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String): Boolean {
+                    findOut(query)
+                    return true
+                }
+
+                override fun onQueryTextChange(newText: String): Boolean {
+                    return true
+                }
+            })
         }
 
         if(activity!!.isTv){
@@ -528,7 +511,7 @@ class MySavedVideo :
         v.editTextText3.setText(note.title)
         v.editTextText4.setText(note.videoId)
         v.editBtn.setOnClickListener {
-            v.editTextText4.convertToId()
+            v.editTextText4.text.convertToId()
         }
         activity?.showDialog(MainActivity.DIALOG_INFO, object :MainActivity.DialogBlock(){
             init {
@@ -559,7 +542,7 @@ class MySavedVideo :
                                 }
                             }
                             try{
-                                activity.info(
+                                (activity ?: ((d as Dialog).context) as Activity).info(
                                     R.string.vid_upd,
                                     UndoBarStyle(R.drawable.undo, R.string.undo),
                                     click,
@@ -572,7 +555,7 @@ class MySavedVideo :
 
                         } else {
                             try{
-                                activity.info(R.string.vid_upd)
+                                activity.info("Video didn't update")
                             }catch (_: Exception){
                                 SupaContainer.dingDong("Video didn't update")
                             }
@@ -591,13 +574,6 @@ class MySavedVideo :
                     setView(v.root)
                     setNegativeButton(android.R.string.cancel, null)
                     setPositiveButton("Update", listener)
-                    setNeutralButton("Convert to id", null)
-                }
-            }
-
-            override fun onDialogCreate(d: AlertDialog) {
-                d.getButton(DialogInterface.BUTTON_NEUTRAL)?.setOnClickListener {
-                    v.editTextText4.convertToId()
                 }
             }
         }.toBundle())
@@ -638,7 +614,7 @@ class MySavedVideo :
         val idv = v.editTextText4
         idv.setText(videoid)
         v.editBtn.setOnClickListener {
-            idv.convertToId()
+            idv.text.convertToId()
         }
         with(b) {
             setView(v.root)
@@ -821,32 +797,7 @@ class MySavedVideo :
         view?.hideKeyBoard()
     }
 
-    fun secIn() {
-        if(!f.isStorageFunctionReviewed){
-            java.lang.Runnable{
-                val o = object : ShowCaseDialog.OnToBuild{
-                    override fun onToBuild(b: ShowcaseView.Builder) {
-                        val d = activity?.actionBar?.height
-                        val v = if(bin.videosList.visibility == View.VISIBLE) bin.videosList else bin.emptyContainer
-                        b.setTarget(ViewTarget(v))
-                            .setContentTitle("This is your library")
-                            .setContentText("The place where you can save your videos")
-                    }
 
-
-                }
-                ShowCaseDialog(activity,o).apply{
-                    setOnDismissListener {
-                        f.isStorageFunctionReviewed = true
-                    }
-                    show()
-                }
-            }.let {
-                Handler(activity!!.mainLooper).postDelayed(it, 800L)
-            }
-
-        }
-    }
 
 
 }

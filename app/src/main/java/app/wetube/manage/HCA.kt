@@ -18,6 +18,7 @@ class HCA(context: Context, data: Cursor) : SimpleCursorAdapter(context, android
             // Get data from cursor
             val data = cursor.getString(cursor.getColumnIndexOrThrow(COL_NAME))
             // Populate views
+
             textView.setText(data)
         }
     }

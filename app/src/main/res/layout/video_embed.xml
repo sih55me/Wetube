@@ -8,13 +8,28 @@
     android:layout_height="match_parent">
 
 
-
+    <TextView
+        android:id="@+id/the_end"
+        android:layout_width="match_parent"
+        android:gravity="center"
+        android:textSize="40sp"
+        android:shadowColor="?android:colorPrimary"
+        android:shadowDx="0"
+        android:visibility="gone"
+        android:scaleY="0"
+        android:scaleX="0"
+        android:shadowDy="0"
+        android:textAllCaps="true"
+        android:shadowRadius="10"
+        android:textColor="?android:colorAccent"
+        android:layout_centerInParent="true"
+        android:layout_height="wrap_content"
+        android:text="The end" />
 
     <RelativeLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/video_color">
+        android:layout_height="match_parent">
 
 
 
@@ -41,6 +56,11 @@
             android:contentDescription="@string/forward" />
 
 
+        <ViewStub
+            android:layout_width="wrap_content"
+            android:id="@+id/control_stub"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"/>
         <FrameLayout
             android:id="@+id/replay_co"
             android:layout_width="match_parent"
@@ -77,8 +97,7 @@
                 android:minWidth="110dp"
                 android:paddingEnd="15dp"
                 android:text="@string/next"
-                android:textSize="18sp"
-                android:theme="@android:style/Theme.DeviceDefault" />
+                android:textSize="18sp" />
 
             <HorizontalScrollView
                 android:layout_width="match_parent"
@@ -142,14 +161,15 @@
 
         <android.widget.Toolbar
             android:id="@+id/tul"
+            android:background="@drawable/actionbar_trans"
+            android:backgroundTint="#B1000000"
             android:layout_width="match_parent"
-            android:titleTextAppearance="?android:textAppearanceMedium"
-            android:subtitleTextAppearance="?android:textAppearanceSmall"
+            android:titleTextAppearance="?android:textAppearance"
+            android:subtitleTextAppearance="?android:textAppearance"
             android:navigationIcon="@drawable/close"
-            android:logo="@drawable/video"
             android:popupTheme="@android:style/Theme.DeviceDefault"
-            android:theme="@android:style/ThemeOverlay.Material.Dark.ActionBar"
-            android:layout_height="?android:actionBarSize">
+            android:theme="@android:style/ThemeOverlay.Material.Dark"
+            android:layout_height="46dp">
 
 
         </android.widget.Toolbar>
@@ -199,6 +219,20 @@
                 android:visibility="gone"
                 tools:ignore="SpeakableTextPresentCheck,UnusedAttribute" />
 
+            <ImageButton
+                android:id="@+id/potrait_fullscreen"
+                android:layout_width="40dp"
+                android:layout_height="50dp"
+                android:visibility="gone"
+                android:layout_toStartOf="@id/toggleFullScreen"
+                android:backgroundTint="#3A000000"
+                android:contentDescription="@string/vefu"
+                android:pointerIcon="hand"
+                android:src="@drawable/fullscreen_portrait"
+                android:tint="@color/white"
+                android:tooltipText="@string/vefu"
+                tools:ignore="SpeakableTextPresentCheck,UnusedAttribute" />
+
 
             <ImageButton
                 android:id="@+id/toggleFullScreen"
@@ -216,16 +250,16 @@
             <TextView
                 android:id="@+id/duraction"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="50dp"
                 android:layout_toEndOf="@id/pausePlay"
-                android:layout_marginTop="15dp"
                 android:paddingRight="10dp"
+                android:gravity="center"
                 android:paddingLeft="10dp"
                 android:shadowColor="@color/black"
-                android:shadowDx="1"
+                android:shadowDx="0"
                 android:textSize="15sp"
-                android:shadowDy="1"
-                android:shadowRadius="0.01"
+                android:shadowDy="0"
+                android:shadowRadius="5"
                 android:text="0:00 / 0:00"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold" />

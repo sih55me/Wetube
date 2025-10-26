@@ -7,7 +7,7 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import app.wetube.window.Paper
 
-class PaperOnFragment(context: Context, val listener: TransPaper): Paper(context) {
+open class PaperOnFragment(context: Context, val listener: TransPaper): Paper(context) {
 
     override fun show() {
         super.show()

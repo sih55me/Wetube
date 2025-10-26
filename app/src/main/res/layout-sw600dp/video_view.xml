@@ -26,9 +26,9 @@
 
 
             <LinearLayout
-                android:layout_width="1250dp"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_weight="0.5"
                 android:orientation="vertical">
 
                 <LinearLayout
@@ -90,11 +90,13 @@
                 </ScrollView>
 
 
+
+
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/swipe"
-                android:layout_width="1000dp"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical" >
@@ -164,7 +166,33 @@
 
                     </LinearLayout>
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:id="@+id/playlist_con"
+                        android:visibility="gone"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
+                        <Button
+                            android:id="@+id/prev_v"
+                            android:layout_weight="1"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="3dp"
+                            android:drawableLeft="@drawable/previous"
+                            android:drawablePadding="10dp"
+                            android:text="@string/prev" />
+
+                        <Button
+                            android:id="@+id/next_v"
+                            android:layout_weight="1"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_margin="3dp"
+                            android:drawableRight="@drawable/next"
+                            android:drawablePadding="10dp"
+                            android:text="@string/next" />
+                    </LinearLayout>
 
                     <ListView
                         android:id="@+id/playlist"

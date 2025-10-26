@@ -69,6 +69,7 @@ import app.wetube.page.dialog.SearchDetail
 import app.wetube.secret.Intro
 import app.wetube.set.Settings
 import app.wetube.window.ActivityContainerDialog
+import com.android.volley.toolbox.Volley
 import kotlinx.coroutines.Runnable
 
 
@@ -285,14 +286,7 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
 
             }
 
-            getString(R.string.about) -> startActivity(
-                Intent(
-                    this,
-                    Settings::class.java
-                ).putExtra("extra_prefs_show_button_bar", true)
-                    .putExtra("extra_prefs_set_next_text", "OK")
-                    .putExtra("extra_prefs_set_back_text", "BACK")
-            )
+
         }
         return super.onOptionsItemSelected(item)
     }
@@ -317,6 +311,7 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
                 changePage(page)
             }
         })
+
     }
 
     @SuppressLint("ResourceType")
@@ -444,24 +439,21 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
 
         val trans = fragmentManager.beginTransaction()
 
-        trans?.apply{
-            try{
-                //onRestart to prevent multi fragment
-                if (fragmentManager.getFragment(savedInstanceState, "s") == null) {
-                    add(contentTarget, Search(), "s")
-                }
-                if (fragmentManager.getFragment(savedInstanceState, "f") == null) {
-                    add(app.wetube.MainActivity.contentTarget, FavCha(), "f")
-                }
-                if (fragmentManager.getFragment(savedInstanceState, "m") == null) {
-                    add(app.wetube.MainActivity.contentTarget, MySavedVideo(), "m")
-                }
-            }catch (_:Exception){
-                //onCreate
 
-                add(app.wetube.MainActivity.contentTarget, Search(), "s").add(app.wetube.MainActivity.contentTarget, FavCha(), "f").add(app.wetube.MainActivity.contentTarget, MySavedVideo(), "m")
+        try{
+            if (savedInstanceState == null) {
+                trans?.add(app.wetube.MainActivity.contentTarget, Search(), "s")
+                    ?.add(app.wetube.MainActivity.contentTarget, FavCha(), "f")
+                    ?.add(app.wetube.MainActivity.contentTarget, MySavedVideo(), "m")
             }
+        }catch (e: Exception){
+            AlertDialog.Builder(this)
+                .setTitle("Page error")
+                .setMessage(e.message)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
         }
+
 
         trans?.commitAllowingStateLoss()
 
@@ -474,36 +466,18 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
                     false -> ActionBar.NAVIGATION_MODE_LIST
                     true -> ActionBar.NAVIGATION_MODE_TABS
                 }
-                setDisplayShowTitleEnabled(!(isTablet or (s.x >= s.y) or (navigationMode == ActionBar.NAVIGATION_MODE_LIST)))
+                val landscape = (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+                setDisplayShowTitleEnabled(landscape or (navigationMode == ActionBar.NAVIGATION_MODE_LIST))
 
                 setListNavigationCallbacks(ArrayAdapter(themedContext, android.R.layout.simple_list_item_1, stringList.map { getString(it) })){i,_->
                     changePage(i)
                     true
                 }
-                val ei = if (sp.getString(
-                        "theme",
-                        "w"
-                    ) == "w"
-                ) R.drawable.explore else android.R.drawable.ic_menu_mapmode
-                val fi = if (sp.getString(
-                        "theme",
-                        "w"
-                    ) == "w"
-                ) R.drawable.favcha else android.R.drawable.ic_menu_my_calendar
-                val vi = if (sp.getString(
-                        "theme",
-                        "w"
-                    ) == "w"
-                ) R.drawable.saved else android.R.drawable.ic_menu_slideshow
-                if (sp.getBoolean("forceWeIcon", false)) {
-                    addTab(addTab(R.string.explore, R.drawable.explore, 0))
-                    addTab(addTab(R.string.favcha, R.drawable.favcha, 1))
-                    addTab(addTab(R.string.library, R.drawable.saved, 2))
-                } else {
-                    addTab(addTab(R.string.explore, ei, 0))
-                    addTab(addTab(R.string.favcha, fi, 1))
-                    addTab(addTab(R.string.library, vi, 2))
-                }
+
+                addTab(addTab(R.string.explore, R.drawable.explore, 0))
+                addTab(addTab(R.string.favcha, R.drawable.favcha, 1))
+                addTab(addTab(R.string.library, R.drawable.saved, 2))
+
 
                 Runnable{
                     if (savedInstanceState != null) {

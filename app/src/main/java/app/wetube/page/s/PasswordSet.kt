@@ -1,4 +1,4 @@
-package app.wetube.set
+package app.wetube.page.s
 
 import android.os.Bundle
 import android.preference.CheckBoxPreference
@@ -27,7 +27,7 @@ class PasswordSet: PreferenceFragment() {
             set(false)
             preferenceScreen!!.summary = "You need to enter the password to change the settings"
             if(activity!=null){
-                DialogPass.newInstance(activity) {
+                DialogPass.Companion.newInstance(activity) {
                     if (it) {
                         set(true)
                         preferenceScreen!!.summary = ""

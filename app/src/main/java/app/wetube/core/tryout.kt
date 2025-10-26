@@ -1,15 +1,16 @@
 package app.wetube.core
 
 import android.content.Context
+import android.widget.Toast
 
 fun tryOut(context: Context, block : () -> Unit){
     try {
         block.invoke()
     }catch (e:Exception){
-       showToastAsNotif(
-           context,
-           text = e.message ?: e.toString()
-       )
+        Toast.makeText(
+           context, e.message ?: e.toString(),
+            Toast.LENGTH_SHORT
+       ).show()
         e.printStackTrace()
 
     }

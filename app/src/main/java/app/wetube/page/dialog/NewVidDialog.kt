@@ -1,6 +1,11 @@
 package app.wetube.page.dialog
 
+import android.app.AlertDialog
+import android.app.Dialog
 import android.content.Context
+import android.content.DialogInterface
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Binder
 import android.os.Bundle
 import android.text.SpannableStringBuilder
@@ -13,12 +18,16 @@ import app.wetube.MainActivity
 import app.wetube.R
 import app.wetube.core.ActionModeCreator
 import app.wetube.core.convertToId
+import app.wetube.core.getThemeId
+import app.wetube.core.info
+import app.wetube.core.isTablet
 import app.wetube.core.isTv
+import app.wetube.core.tul
 import app.wetube.databinding.ActivityNewVidBinding
 import app.wetube.manage.db.VidDB
 import app.wetube.window.Paper
 
-class NewVidDialog private constructor(context : Context, private val arguments: Bundle = Bundle()): Paper(context) {
+class NewVidDialog private constructor(context : Context, private val arguments: Bundle = Bundle()): AlertDialog(context, if(context.isTablet)0 else context.getThemeId()) {
 
     private val db by lazy { VidDB(context) }
 
@@ -27,8 +36,27 @@ class NewVidDialog private constructor(context : Context, private val arguments:
 
     }
 
+    private val onClick = DialogInterface.OnClickListener{d,b->
+        if(b == DialogInterface.BUTTON_POSITIVE){
+            add(
+                bin.editTextText3.text.toString(),
+                bin.editTextText4.text.toString()
+            )
+        }
+    }
+
+
+    init{
+        if(!context.isTablet){
+            window!!.setWindowAnimations(android.R.style.Animation_InputMethod)
+        }
+        setTitle(R.string.add)
+        setButton(DialogInterface.BUTTON_POSITIVE, context.getString(R.string.add), onClick)
+        setButton(DialogInterface.BUTTON_NEGATIVE, context.getString(android.R.string.cancel), onClick)
+    }
+
     override fun onKeyShortcut(keyCode: Int, event: KeyEvent): Boolean {
-        if(event.isCtrlPressed == true){
+        if(event.isCtrlPressed){
             if (keyCode == KeyEvent.KEYCODE_S) {
                 try{
                     add(
@@ -60,6 +88,7 @@ class NewVidDialog private constructor(context : Context, private val arguments:
         fun new(context: Context,a: Bundle): NewVidDialog {
             return NewVidDialog(context, a)
         }
+
     }
 
 
@@ -68,14 +97,14 @@ class NewVidDialog private constructor(context : Context, private val arguments:
     var videoId:String =""
 
 
-    private val bin by lazy{ActivityNewVidBinding.inflate(layoutInflater)}
+    internal val bin by lazy{ActivityNewVidBinding.inflate(layoutInflater)}
 
 
     private val cam by lazy { ActionModeCreator().apply {
         onStart = {a,m->
 
             m.add(0,123,0,"Convert to id").setOnMenuItemClickListener {
-                bin.editTextText4.convertToId()
+                bin.editTextText4.text.convertToId()
                 a.finish()
                 true
             }
@@ -94,10 +123,15 @@ class NewVidDialog private constructor(context : Context, private val arguments:
     }
 
 
-    override fun onStart() {
-        showBackButton()
-        super.onStart()
-
+    override fun show() {
+        super.show()
+        window?.tul?.apply{
+            setNavigationIcon(R.drawable.close)
+            setNavigationContentDescription(R.string.close)
+            setNavigationOnClickListener {
+                dismiss()
+            }
+        }
     }
 
     fun regonize(b: Bundle){
@@ -111,11 +145,15 @@ class NewVidDialog private constructor(context : Context, private val arguments:
                 }
             }
         }
+
     }
 
 
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        setContentView(bin.root)
+        setView(bin.root)
+        super.onCreate(savedInstanceState)
         regonize(savedInstanceState?:arguments)
         try{
             bin.editTextText3.text = SpannableStringBuilder("Video ${db.listAsList().size + 1}")
@@ -124,16 +162,19 @@ class NewVidDialog private constructor(context : Context, private val arguments:
         }catch (_: Exception){
             ownerActivity?.showDialog(MainActivity.DIALOG_DATA_CORRUPT)
         }
+        bin.editBtn.setOnClickListener {
+            bin.editTextText4.text.convertToId()
+        }
+        getButton(DialogInterface.BUTTON_POSITIVE)?.setOnClickListener {
+            onClick.onClick(this, BUTTON_POSITIVE)
+        }
+
     }
 
 
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         with(menu){
-            add("Convert To Id").setOnMenuItemClickListener {
-                bin.editTextText4.convertToId()
-                true
-            }
             add(R.string.add).setIcon(R.drawable.check).setShowAsActionFlags(if(context.isTv) MenuItem.SHOW_AS_ACTION_NEVER else MenuItem.SHOW_AS_ACTION_ALWAYS).setOnMenuItemClickListener {
                 add(
                     bin.editTextText3.text.toString(),
@@ -161,7 +202,17 @@ class NewVidDialog private constructor(context : Context, private val arguments:
             dismiss()
             onVideoSev.run()
 
-        } else { Toast.makeText(context, "Cannot saving the video!", Toast.LENGTH_LONG).show() }
+        } else {
+            val d = context.getDrawable(R.drawable.error)
+
+            if(t.isEmpty()){
+                bin.editTextText3.setError("Must not be empty", d)
+            }
+            if(i.isEmpty()){
+                bin.editTextText4.setError("Must not be empty", d)
+            }
+            Toast.makeText(context, "Cannot saving the video!", Toast.LENGTH_LONG).show()
+        }
     }
 
     class OnSave(private val r: Runnable): Binder(), Runnable{
@@ -180,7 +231,7 @@ class NewVidDialog private constructor(context : Context, private val arguments:
 
 
     override fun onStop() {
-        decorView?.let { v->
+        window?.decorView?.let { v->
             v.parent?.let {p->
                 if (p is ViewGroup){
                     p.removeView(v)

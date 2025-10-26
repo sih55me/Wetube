@@ -3,6 +3,7 @@ package app.wetube.page
 import android.app.ActivityManager
 import android.app.AlertDialog
 import android.app.Fragment
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
@@ -12,16 +13,23 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.support.v4.content.FileProvider
+import android.preference.DialogPreference
+import android.preference.Preference
+import android.preference.PreferenceCategory
+import android.preference.PreferenceFragment
+import android.preference.PreferenceGroup
 import android.support.v7.graphics.Palette
 import android.text.SpannableStringBuilder
-import android.util.Base64
 import android.view.ActionMode
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.PopupMenu
 import android.widget.Toast
 import app.wetube.R
 import app.wetube.core.Search
@@ -30,18 +38,17 @@ import app.wetube.core.getBitmapFromView
 import app.wetube.core.info
 import app.wetube.core.tryOn
 import app.wetube.databinding.InfoBinding
+import app.wetube.item.ChannelDetail
+import app.wetube.manage.provide.FileProvider
 import app.wetube.page.dialog.PreviewImgPage
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.BitmapImageViewTarget
+import app.wetube.preference.InfoDialogPreference
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.text.ifEmpty
 
-class AboutChannel: Fragment() {
-    val binding by lazy { InfoBinding.inflate(activity!!!!.layoutInflater) }
+class AboutChannel: PreferenceFragment() {
 
     private var isInit = false
 
@@ -50,29 +57,15 @@ class AboutChannel: Fragment() {
 
     private val dinfo = arrayListOf<String?>()
 
+    lateinit var item : ChannelDetail
+
 
     private var thumb = ""
 
+    private var ic: Drawable? = null
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
-        val ir = FrameLayout(inflater.context)
-        ir.addView(binding.root)
-        return ir
 
-    }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        binding.root.parent?.let {
-            if(it is ViewGroup) {
-                it.removeView(binding.root)
-            }
-        }
-    }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -108,10 +101,193 @@ class AboutChannel: Fragment() {
         super.onSaveInstanceState(outState)
         tryOn{
             outState?.apply {
-                putString("info", binding.info.text.toString())
+                if(::item.isInitialized){
+                    putParcelable("item", item)
+                }
                 putStringArrayList("dinfo", dinfo)
-                putString("thumb", thumb)
             }
+        }
+    }
+
+
+    override fun onCreateOptionsMenu(menu: Menu?, inflater: MenuInflater?) {
+        super.onCreateOptionsMenu(menu, inflater)
+        val l = MenuItem.OnMenuItemClickListener {
+            when (it.title) {
+                "Load icon"->loadIcon()
+                "Look" -> {
+                    ic?.let {i->
+                        activity?.showDialog(
+                            PreviewImgPage.PREVIEW_IMAGE,
+                            Bundle().apply {
+                                putBinder(
+                                    PreviewImgPage.PREVIEW_CODE,
+                                    PreviewImgPage.Get(
+                                        i,
+                                        arguments.getString("name").toString()
+                                    )
+                                )
+                            }
+                        )
+                    }
+                }
+
+                "Share icon" -> {
+                    val intent = Intent(Intent.ACTION_SEND)
+                    val imagefolder = File(activity!!.cacheDir, "images")
+                    var uri: Uri? = null
+                    if (ic == null) {
+                        Toast.makeText(activity!!, "No image available", Toast.LENGTH_LONG)
+                            .show()
+                        false
+                    }
+                    try {
+                        imagefolder.mkdirs()
+                        val file = File(imagefolder, "shared_image.png")
+                        val outputStream = FileOutputStream(file)
+
+                        val bitmap = Bitmap.createBitmap(
+                            ic!!.getIntrinsicWidth(),
+                            ic!!.getIntrinsicHeight(), Bitmap.Config.ARGB_8888
+                        )
+                        val canvas = Canvas(bitmap)
+                        ic!!.setBounds(0, 0, canvas.getWidth(), canvas.getHeight())
+                        ic!!.draw(canvas)
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 90, outputStream)
+                        outputStream.flush()
+                        outputStream.close()
+                        uri = FileProvider.getUriForFile(
+                            activity!!,
+                            "app.wetube.image-share",
+                            file
+                        )
+                    } catch (e: Exception) {
+                        Toast.makeText(activity!!, e.message, Toast.LENGTH_LONG).show()
+                    }
+
+                    // putting uri of image to be shared
+                    intent.apply {
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        // adding text to share
+
+                        // Add subject Here
+                        putExtra(Intent.EXTRA_SUBJECT, "Subject Here")
+
+                        // setting type to image
+                        setType("image/png")
+
+                    }
+                    startActivity(Intent.createChooser(intent, "Share Via"))
+                }
+
+                "Like this channel?" -> {
+                    AlertDialog.Builder(activity)
+                        .setTitle("Do you like ${item.title}?")
+                        .setPositiveButton("Yes", null)
+                        .setNegativeButton("No", null)
+                        .create().apply {
+                            window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+                            show()
+                            Toast.makeText(activity, "Wait.......", Toast.LENGTH_LONG)
+                                .show()
+                            Handler(activity.mainLooper).postDelayed({
+                                Toast.makeText(activity, "Get it!", Toast.LENGTH_LONG)
+                                    .show()
+                                val intent = Intent(Intent.ACTION_SEND)
+                                val imagefolder = File(activity!!.cacheDir, "images")
+                                val d = window?.decorView?.getBitmapFromView()
+                                var uri: Uri? = null
+                                if (d == null) {
+                                    Toast.makeText(
+                                        activity!!,
+                                        "No image available",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                                try {
+                                    imagefolder.mkdirs()
+                                    val file = File(imagefolder, "shared_image.png")
+                                    val outputStream = FileOutputStream(file)
+                                    d?.compress(Bitmap.CompressFormat.PNG, 90, outputStream)
+                                    outputStream.flush()
+                                    outputStream.close()
+                                    uri = FileProvider.getUriForFile(
+                                        activity!!,
+                                        "app.wetube.image-share",
+                                        file
+                                    )
+                                } catch (e: Exception) {
+                                    Toast.makeText(activity!!, e.message, Toast.LENGTH_LONG)
+                                        .show()
+                                }
+
+                                // putting uri of image to be shared
+                                intent.apply {
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    // adding text to share
+
+                                    // Add subject Here
+                                    putExtra(Intent.EXTRA_SUBJECT, "Subject Here")
+
+                                    // setting type to image
+                                    setType("image/png")
+
+                                }
+
+                                // calling startactivity() to share
+                                startActivity(Intent.createChooser(intent, "share"))
+                                Handler(activity.mainLooper).postDelayed({
+                                    this.dismiss()
+                                }, 30L)
+
+                            }, 250L)
+                        }
+                }
+
+                "Screenshot about" -> {
+                    val d = activity.window.decorView.getBitmapFromView()
+                    val intent = Intent(Intent.ACTION_SEND)
+                    val imagefolder = File(activity!!.cacheDir, "images")
+                    var uri: Uri? = null
+                    try {
+                        imagefolder.mkdirs()
+                        val file = File(imagefolder, "shared_image.png")
+                        val outputStream = FileOutputStream(file)
+                        d.compress(Bitmap.CompressFormat.PNG, 90, outputStream)
+                        outputStream.flush()
+                        outputStream.close()
+                        uri = FileProvider.getUriForFile(
+                            activity!!,
+                            "app.wetube.image-share",
+                            file
+                        )
+                    } catch (e: Exception) {
+                        Toast.makeText(activity!!, e.message, Toast.LENGTH_LONG).show()
+                    }
+
+                    // putting uri of image to be shared
+                    intent.apply {
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        // adding text to share
+
+                        // Add subject Here
+                        putExtra(Intent.EXTRA_SUBJECT, "Subject Here")
+
+                        // setting type to image
+                        setType("image/png")
+
+                    }
+                    startActivity(Intent.createChooser(intent, "Share Via"))
+                }
+            }
+            true
+        }
+        menu?.addSubMenu("Tools")?.apply {
+            add("Look").setOnMenuItemClickListener(l)
+            add("Share icon").setOnMenuItemClickListener(l)
+            add("Load icon").setOnMenuItemClickListener(l)
+            add("Like this channel?").setOnMenuItemClickListener(l)
+            add("Screenshot about").setOnMenuItemClickListener(l)
         }
     }
 
@@ -119,241 +295,44 @@ class AboutChannel: Fragment() {
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        (binding.root.layoutParams as FrameLayout.LayoutParams).apply {
-            leftMargin = dime(R.dimen.marginLayout).toInt()
-            rightMargin = dime(R.dimen.marginLayout).toInt()
-        }
         val idc = arguments?.getString("id") ?: return
-
-
-        binding.icon.apply{
-            setOnCreateContextMenuListener { m,_,_->
-                val l = MenuItem.OnMenuItemClickListener {
-                    when(it.title){
-                        "More info" -> {
-                            activity?.showDialog(316109, Bundle().apply {
-                                putString("dinfo", dinfo.joinToString(separator = "\n"))
-                            })
-                        }
-                        "Look" -> {
-                            drawable?.let {
-                                activity?.showDialog(
-                                    PreviewImgPage.PREVIEW_IMAGE,
-                                    Bundle().apply {
-                                        putBinder(
-                                            PreviewImgPage.PREVIEW_CODE,
-                                            PreviewImgPage.Get(
-                                                it,
-                                                arguments.getString("name").toString()
-                                            )
-                                        )
-                                    }
-                                )
-                            }
-                        }
-
-                        "Share icon"->{
-                            val intent = Intent(Intent.ACTION_SEND)
-                            val imagefolder = File(activity!!.cacheDir, "images")
-                            var uri: Uri? = null
-                            val d = binding.icon.drawable
-                            if (d == null) {
-                                Toast.makeText(activity!!, "No image available", Toast.LENGTH_LONG).show()
-                                false
-                            }
-                            try {
-                                imagefolder.mkdirs()
-                                val file = File(imagefolder, "shared_image.png")
-                                val outputStream = FileOutputStream(file)
-
-                                val bitmap = Bitmap.createBitmap(
-                                    d.getIntrinsicWidth(),
-                                    d.getIntrinsicHeight(), Bitmap.Config.ARGB_8888
-                                )
-                                val canvas = Canvas(bitmap)
-                                d.setBounds(0, 0, canvas.getWidth(), canvas.getHeight())
-                                d.draw(canvas)
-                                bitmap.compress(Bitmap.CompressFormat.PNG, 90, outputStream)
-                                outputStream.flush()
-                                outputStream.close()
-                                uri = FileProvider.getUriForFile(activity!!, "app.wetube.image-share", file)
-                            } catch (e: Exception) {
-                                Toast.makeText(activity!!, e.message, Toast.LENGTH_LONG).show()
-                            }
-
-                            // putting uri of image to be shared
-                            intent.apply {
-                                putExtra(Intent.EXTRA_STREAM, uri)
-                                // adding text to share
-
-                                // Add subject Here
-                                putExtra(Intent.EXTRA_SUBJECT, "Subject Here")
-
-                                // setting type to image
-                                setType("image/png")
-
-                            }
-                            startActivity(Intent.createChooser(intent, "Share Via"))
-                        }
-                        "Like this channel?" -> {
-                            AlertDialog.Builder(activity)
-                                .setTitle("Do you like ${binding.who.text}?")
-                                .setPositiveButton("Yes", null)
-                                .setNegativeButton("No", null)
-                                .show().apply {
-                                    Toast.makeText(activity, "Wait.......", Toast.LENGTH_LONG).show()
-                                    Handler(activity.mainLooper).postDelayed({
-                                        Toast.makeText(activity, "Get it!", Toast.LENGTH_LONG).show()
-                                        val intent = Intent(Intent.ACTION_SEND)
-                                        val imagefolder = File(activity!!.cacheDir, "images")
-                                        val d = window?.decorView?.getBitmapFromView()
-                                        var uri: Uri? = null
-                                        if (d == null) {
-                                            Toast.makeText(
-                                                activity!!,
-                                                "No image available",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-                                        try {
-                                            imagefolder.mkdirs()
-                                            val file = File(imagefolder, "shared_image.png")
-                                            val outputStream = FileOutputStream(file)
-                                            d?.compress(Bitmap.CompressFormat.PNG, 90, outputStream)
-                                            outputStream.flush()
-                                            outputStream.close()
-                                            uri = FileProvider.getUriForFile(
-                                                activity!!,
-                                                "app.wetube.image-share",
-                                                file
-                                            )
-                                        } catch (e: Exception) {
-                                            Toast.makeText(activity!!, e.message, Toast.LENGTH_LONG)
-                                                .show()
-                                        }
-
-                                        // putting uri of image to be shared
-                                        intent.apply {
-                                            putExtra(Intent.EXTRA_STREAM, uri)
-                                            // adding text to share
-
-                                            // Add subject Here
-                                            putExtra(Intent.EXTRA_SUBJECT, "Subject Here")
-
-                                            // setting type to image
-                                            setType("image/png")
-
-                                        }
-
-                                        // calling startactivity() to share
-                                        startActivity(Intent.createChooser(intent, "share"))
-                                        Handler(activity.mainLooper).postDelayed({
-                                            this.dismiss()
-                                        }, 30L)
-
-                                    }, 250L)
-                                }
-                        }
-                        "Screenshot about"->{
-                            val d = binding.root.getBitmapFromView()
-                            val intent = Intent(Intent.ACTION_SEND)
-                            val imagefolder = File(activity!!.cacheDir, "images")
-                            var uri: Uri? = null
-                            try {
-                                imagefolder.mkdirs()
-                                val file = File(imagefolder, "shared_image.png")
-                                val outputStream = FileOutputStream(file)
-                                d.compress(Bitmap.CompressFormat.PNG, 90, outputStream)
-                                outputStream.flush()
-                                outputStream.close()
-                                uri = FileProvider.getUriForFile(
-                                    activity!!,
-                                    "app.wetube.image-share",
-                                    file
-                                )
-                            } catch (e: Exception) {
-                                Toast.makeText(activity!!, e.message, Toast.LENGTH_LONG).show()
-                            }
-
-                            // putting uri of image to be shared
-                            intent.apply {
-                                putExtra(Intent.EXTRA_STREAM, uri)
-                                // adding text to share
-
-                                // Add subject Here
-                                putExtra(Intent.EXTRA_SUBJECT, "Subject Here")
-
-                                // setting type to image
-                                setType("image/png")
-
-                            }
-                            startActivity(Intent.createChooser(intent, "Share Via"))
-                        }
-                    }
-                    true
-                }
-                m?.apply {
-                    m.setHeaderIcon(drawable)
-                    m.setHeaderTitle(arguments.getString("name").toString())
-
-                    add("More info").setOnMenuItemClickListener(l)
-                    add("Look").setOnMenuItemClickListener(l)
-                    add("Share icon").setOnMenuItemClickListener(l)
-                    add("Like this channel?").setOnMenuItemClickListener(l)
-                    add("Screenshot about").setOnMenuItemClickListener(l)
-                }
-            }
-            setOnClickListener {
-                it.showContextMenu()
-            }
-        }
-        binding.who.text = SpannableStringBuilder(arguments.getString("name").toString())
+        if(activity == null)return
+        preferenceScreen = preferenceManager.createPreferenceScreen(activity)
+        val profileNname = InfoDialogPreference(activity)
+        profileNname.setTitle(arguments.getString("name").toString())
+        profileNname.summary = "Tap to look the description"
+        profileNname.setNegativeButtonText(R.string.close)
+        profileNname.setPositiveButtonText(null)
+        val bioCat = PreferenceCategory(activity)
+        bioCat.setTitle("More info")
+        preferenceScreen.addPreference(profileNname)
+        preferenceScreen.addPreference(bioCat)
         if(savedInstanceState == null){
             if(!isInit){
                 Search(activity!!).findChannelById(idc, {
+                    item = it
                     thumb = it.thumbnail
-                    tryOn {
-                        Picasso.get()
-                            .load(thumb)
-                            .placeholder(R.drawable.profile)
-                            .error(R.drawable.info)
-                            .into(object  : Target {
-
-                                override fun onBitmapLoaded(
-                                    bitmap: Bitmap?,
-                                    from: Picasso.LoadedFrom?
-                                ) {
-                                    binding.icon.setImageBitmap(bitmap)
-                                    activity?.setTaskDescription(ActivityManager.TaskDescription(arguments.getString("name").toString(), bitmap))
-                                    colorize(bitmap)
-                                }
-
-
-
-
-                                override fun onBitmapFailed(
-                                    e: java.lang.Exception?,
-                                    errorDrawable: Drawable?
-                                ) {
-                                    info("Cannot load the profile")
-                                }
-
-                                override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
-                                    binding.icon.setImageToDefault()
-                                }
-                            })
-                        val d = it.description.ifEmpty { "No information available" }
-                        if(it.born.isNotEmpty()){
-                            dinfo.add("Since : ${it.born}")
-                        }
-                        if(it.lived.isNotEmpty()){
-                            dinfo.add("Live in : ${it.lived}")
-                        }
-                        if(it.genzid.isNotEmpty()) {
-                            dinfo.add("Defined Id : ${it.genzid}")
-                        }
-                        binding.info.text = d
-                        isInit = true
+                    profileNname.setDialogTitle(arguments.getString("name").toString())
+                    profileNname.setDialogMessage(it.description.ifEmpty { "No information available" })
+                    if(arguments.getString("name").toString() != it.title){
+                        dinfo.add("Old Name : ${arguments.getString("name").toString()}\nNew name : ${it.title}")
+                    }
+                    if(it.born.isNotEmpty()){
+                        dinfo.add("Since : ${it.born}")
+                    }
+                    if(it.lived.isNotEmpty()){
+                        dinfo.add("Live in : ${it.lived}")
+                    }
+                    if(it.genzid.isNotEmpty()) {
+                        dinfo.add("Defined Id : ${it.genzid}")
+                    }
+                    isInit = true
+                }, onDone = {
+                    loadIcon()
+                    dinfo.forEach {
+                        bioCat.addPreference(Preference(activity).apply {
+                            setSummary(it)
+                        })
                     }
                 })
             }
@@ -366,63 +345,78 @@ class AboutChannel: Fragment() {
     }
 
 
-    private fun colorize(resource: Bitmap?) {
-        if(resource == null)return
-
-        val b = Palette.from(resource).generate()
-        b.mutedSwatch?.let {
-
-            binding.root.setBackgroundColor(it.rgb)
-            binding.info.setTextColor(it.bodyTextColor)
-            binding.who.setTextColor(it.titleTextColor)
-        }
-    }
-
-
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         setHasOptionsMenu(true)
         super.onViewStateRestored(savedInstanceState)
         if(savedInstanceState != null){
-            binding.info.text = savedInstanceState.getString("info", "No information available")
-            savedInstanceState.getStringArrayList("dinfo")?.let {
-                dinfo.addAll(it)
+            val profileNname = preferenceScreen.getPreference(0)
+            profileNname.summary = savedInstanceState.getString("info", "No information available")
+            val par = savedInstanceState.getParcelable<ChannelDetail>("item")
+            if(par == null)return
+            item = par
+            thumb = item.thumbnail
+            loadIcon()
+            profileNname.setTitle(item.title)
+            profileNname.setSummary(item.description)
+            if(item.born.isNotEmpty()){
+                dinfo.add("Since : ${item.born}")
             }
-            thumb = savedInstanceState.getString("thumb")?: ""
-            thumb.let {
-                tryOn {
-                    Picasso.get()
-                        .load(it)
-                        .placeholder(R.drawable.profile)
-                        .error(R.drawable.info)
-                        .into(object  : Target {
-
-                            override fun onBitmapLoaded(
-                                bitmap: Bitmap?,
-                                from: Picasso.LoadedFrom?
-                            ) {
-                                binding.icon.setImageBitmap(bitmap)
-                                activity?.setTaskDescription(ActivityManager.TaskDescription(arguments.getString("name").toString(), bitmap))
-                                colorize(bitmap)
-                            }
-
-
-
-
-                            override fun onBitmapFailed(
-                                e: java.lang.Exception?,
-                                errorDrawable: Drawable?
-                            ) {
-                                info("Cannot load the profile")
-                            }
-
-                            override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
-                                binding.icon.setImageToDefault()
-                            }
-                        })
-                    isInit = true
+            if(item.lived.isNotEmpty()){
+                dinfo.add("Live in : ${item.lived}")
+            }
+            if(item.genzid.isNotEmpty()) {
+                dinfo.add("Defined Id : ${item.genzid}")
+            }
+            loadIcon()
+            val bioCat = preferenceScreen.getPreference(1)
+            if(bioCat is PreferenceGroup){
+                dinfo.forEach {
+                    bioCat.addPreference(Preference(activity).apply {
+                        setTitle(it)
+                    })
                 }
             }
+        }
+    }
 
+    private fun loadIcon() {
+        tryOn {
+            Picasso.get()
+                .load(thumb)
+                .error(R.drawable.info)
+                .into(object  : Target {
+
+                    override fun onBitmapLoaded(
+                        bitmap: Bitmap?,
+                        from: Picasso.LoadedFrom?
+                    ) {
+                        ic = BitmapDrawable(bitmap)
+                        try{
+                            (preferenceScreen?.getPreference(0) as InfoDialogPreference).setDialogIcon(
+                                ic
+                            )
+                        }catch (_: Exception){
+                            preferenceScreen?.getPreference(0)?.setIcon(
+                                ic
+                            )
+                        }
+                        activity?.setTaskDescription(ActivityManager.TaskDescription(arguments.getString("name").toString(), bitmap))
+                    }
+
+
+
+
+                    override fun onBitmapFailed(
+                        e: java.lang.Exception?,
+                        errorDrawable: Drawable?
+                    ) {
+                        info("Cannot load the profile")
+                    }
+
+                    override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+                    }
+                })
+            isInit = true
         }
     }
 
@@ -440,16 +434,5 @@ class AboutChannel: Fragment() {
         isInit = !isRemoving
     }
 
-
-
-
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        (binding.con.layoutParams as FrameLayout.LayoutParams).apply {
-            leftMargin = dime(R.dimen.marginLayout).toInt()
-            rightMargin = dime(R.dimen.marginLayout).toInt()
-        }
-        super.onConfigurationChanged(newConfig)
-    }
 
 }

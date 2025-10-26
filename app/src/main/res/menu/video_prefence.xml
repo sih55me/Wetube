@@ -72,18 +72,7 @@
         android:id="@+id/share_ic"
         android:icon="@drawable/share"
         android:title="@string/share"
-        android:titleCondensed="Share Thumbnail"
         android:visible="true"
-        android:showAsAction="always">
-        <menu>
-            <item
-                android:title="Video id"
-                android:id="@+id/vidid"/>
-            <item android:title="QR Code"
-                android:id="@+id/QC"/>
-            <item android:id="@+id/thumbnail"
-                android:title="Thumbnail"/>
-        </menu>
-    </item>
+        android:showAsAction="always"/>
 
 </menu>

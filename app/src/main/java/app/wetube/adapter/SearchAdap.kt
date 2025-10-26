@@ -10,7 +10,6 @@ import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
-import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.ActionMode
 import android.view.Gravity
@@ -38,7 +37,7 @@ import app.wetube.item.VideoDetail
 import app.wetube.page.dialog.InfoVid
 import app.wetube.service.FloatVideo
 import app.wetube.service.Yt.atPip
-import com.bumptech.glide.Glide
+
 import com.squareup.picasso.Picasso
 import java.util.Locale
 
@@ -123,12 +122,12 @@ class SearchAdap(
             rowView = convertView
             viewHolder = rowView.tag as ItemInList
         }
-        onBindViewHolder(viewHolder, position)
+        onBindViewHolder(viewHolder, position, convertView == null)
         return rowView
     }
 
 
-    fun onBindViewHolder(holder: ItemInList, position: Int) {
+    fun onBindViewHolder(holder: ItemInList, position: Int, first: Boolean) {
         val note = data[position]
         val title = note.title.changeEnHt()
         holder.view.findViewById<TextView>(R.id.title).text = title
@@ -482,9 +481,6 @@ class SearchAdap(
                                 note.postDate.changeEnHt()
                             )
                         ).apply {
-                            showBackButton {
-                                dismiss()
-                            }
                             show()
                         }
 
@@ -546,6 +542,5 @@ class SearchAdap(
     enum class Option{
         Share, Save
     }
-    class SearchItemView(val view : View) :RecyclerView.ViewHolder(view)
 }
 

@@ -2,6 +2,7 @@ package app.wetube.page.dialog
 
 
 import android.app.AlertDialog
+import android.app.Dialog
 import android.app.ProgressDialog
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -17,10 +18,15 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.widget.Adapter
 import android.widget.AdapterView
+import android.widget.AdapterViewFlipper
 import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.Gallery
 import android.widget.GridView
+import android.widget.ListView
+import android.widget.StackView
 import app.wetube.ChannelInfo
 import app.wetube.R
 import app.wetube.core.Search
@@ -29,6 +35,7 @@ import app.wetube.core.tryOn
 import app.wetube.item.ChannelDetail
 import app.wetube.kembaliKe
 import app.wetube.manage.db.FavChaDB
+import app.wetube.page.PaperOnFragment
 import app.wetube.page.Sheet
 
 class SearchPeople: Sheet() {
@@ -42,19 +49,19 @@ class SearchPeople: Sheet() {
         )
     }
 
+
     override fun onCreateView(
         inflater: LayoutInflater?,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return GridView(activity)
+        return ListView(activity)
     }
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if(view !is GridView)return
+        if(view !is ListView)return
 
-        view.numColumns = GridView.AUTO_FIT
         view.adapter = adap
         paper.showBackButton()
         if(savedInstanceState != null){
@@ -63,11 +70,6 @@ class SearchPeople: Sheet() {
                 data = d.filterIsInstance<ChannelDetail>().toMutableList()
                 reload()
             }
-        }
-        if(data.isEmpty()){
-            Handler(Looper.getMainLooper()).postDelayed({
-                requestSm(true)
-            },300L)
         }
         view.setOnCreateContextMenuListener { menu, v, menuInfo ->
             val l = data[(menuInfo as AdapterView.AdapterContextMenuInfo).position]
@@ -113,6 +115,7 @@ class SearchPeople: Sheet() {
         n.setProgressStyle(ProgressDialog.STYLE_SPINNER)
         n.setMessage("Getting data....")
         n.setIcon(R.drawable.search)
+        data.clear()
         s.searchChannel(
             query = text.toString(),
             max = 35,

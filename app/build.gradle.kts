@@ -16,8 +16,8 @@ android {
         applicationId = "app.wetube"
         minSdk = 22
         targetSdk = 34
-        versionCode = 24
-        versionName = "15"
+        versionCode = 25
+        versionName = "15.5"
     }
 
     buildTypes {
@@ -43,6 +43,15 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/androidx.*"
+        }
+    }
+
+    configurations{
+        all { // You should exclude one of them not both of them
+            exclude(group = "com.android.support", module = "support-core-ui")
+            exclude(group = "com.android.support", module = "support-compat")
+            exclude(group = "com.android.support", module = "support-v4")
         }
     }
 }
@@ -53,14 +62,12 @@ dependencies {
     implementation("com.android.volley:volley:1.2.1")
     implementation("com.cocosw:undobar:1.8.1")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
-    implementation("com.android.support:support-v4:28.0.0")
-    implementation("com.android.support:recyclerview-v7:28.0.0")
     implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.0.0")
     implementation("com.android.support:cardview-v7:28.0.0")
-    implementation("com.github.bumptech.glide:glide:3.3.0")
     implementation("com.github.amlcurran.showcaseview:library:5.4.3")
     implementation("com.android.support:palette-v7:28.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("com.squareup.picasso:picasso:2.71828")
+    implementation("com.cocosw:bottomsheet:1.5.0")
 
 }

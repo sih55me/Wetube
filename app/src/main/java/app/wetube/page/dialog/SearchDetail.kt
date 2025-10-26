@@ -26,8 +26,9 @@ import app.wetube.databinding.SearchAdvancedBinding
 import app.wetube.manage.db.FavChaDB
 import app.wetube.manage.db.HistoryDB
 import app.wetube.page.Search
+import app.wetube.window.Paper
 
-class SearchDetail(private val activity: Activity,private var arguments: Bundle = Bundle()): AlertDialog(activity){
+class SearchDetail(private val activity: Activity,private var arguments: Bundle = Bundle()): Paper(activity){
 
 
     var onStart: (SearchDetail.() -> Unit) = {}
@@ -84,74 +85,20 @@ class SearchDetail(private val activity: Activity,private var arguments: Bundle 
             arguments = savedInstanceState.getBundle("a") ?: arguments
         }
         v.root.releaseParent()
-        setView(v.root)
-        setTitle("Search Advanced")
-        val d = DialogInterface.OnClickListener{ _, i->
-            when(i){
-                BUTTON_POSITIVE -> {
-                    onQuery(v.query.text.toString(), v.channelId.text.toString(), o, false)
-                    dismiss()
-                }
-
-                BUTTON_NEUTRAL ->{
-                    onQuery(v.query.text.toString(), v.channelId.text.toString(), o, true)
-                    dismiss()
-                }
-
-            }
+        setContentView(v.root)
+        setTitle("Request")
+        v.openq.setOnClickListener {
+            v.query.showDropDown()
         }
-        setButton(BUTTON_POSITIVE, activity.getString(android.R.string.search_go),d)
-        setButton(BUTTON_NEGATIVE, activity.getString(android.R.string.cancel), d)
-        if(canBeNext){
-            setButton(BUTTON_NEUTRAL, "Next key", d)
+        v.openc.setOnClickListener {
+            v.channelId.showDropDown()
         }
+
         super.onCreate(savedInstanceState)
+        showBackButton()
         with(v.query) {
             setAdapter(ArrayAdapter(context, android.R.layout.simple_list_item_1, hdb.listAsList().toMutableList()))
-            addTextChangedListener(object : TextWatcher{
-                override fun beforeTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    count: Int,
-                    after: Int,
-                ) {
-                    
-                }
 
-                override fun onTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    before: Int,
-                    count: Int,
-                ) {
-                    v.openq.let {
-                        if (s.isNullOrEmpty()) {
-                            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                it.tooltipText = context.getString(R.string.history_search)
-                            }
-                            it.contentDescription = context.getString(R.string.history_search)
-                            it.setImageResource(R.drawable.arrow_drop)
-                            it.setOnClickListener {
-                                v.query.showDropDown()
-                            }
-                        }else{
-                            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                                it.tooltipText = context.getString(R.string.clear)
-                            }
-                            it.contentDescription = context.getString(R.string.clear)
-                            it.setImageResource(R.drawable.close)
-                            it.setOnClickListener {
-                                v.query.setText(null)
-                            }
-                        }
-                    }
-                }
-
-                override fun afterTextChanged(s: Editable?) {
-                    
-                }
-
-            })
             threshold = 1
         }
         with(v.channelId) {
@@ -161,51 +108,6 @@ class SearchDetail(private val activity: Activity,private var arguments: Bundle 
             onItemClickListener =  AdapterView.OnItemClickListener{_,_,position,_->
                 v.channelId.setText(l[position].id)
             }
-            addTextChangedListener(object : TextWatcher{
-                override fun beforeTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    count: Int,
-                    after: Int,
-                ) {
-
-                }
-
-                override fun onTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    before: Int,
-                    count: Int,
-                ) {
-                    v.openc.let {
-
-                        if (s.isNullOrEmpty()) {
-                            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                it.tooltipText = context.getString(R.string.favcha)
-                            }
-                            it.contentDescription = context.getString(R.string.favcha)
-                            it.setImageResource(R.drawable.arrow_drop)
-                            it.setOnClickListener {
-                                v.channelId.showDropDown()
-                            }
-                        }else{
-                            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                it.tooltipText = context.getString(R.string.clear)
-                            }
-                            it.contentDescription = context.getString(R.string.favcha)
-                            it.setImageResource(R.drawable.close)
-                            it.setOnClickListener {
-                                v.channelId.setText(null)
-                            }
-                        }
-                    }
-                }
-
-                override fun afterTextChanged(s: Editable?) {
-
-                }
-
-            })
         }
         v.cf.setOnClickListener {_->
             v.order.setSelection(0)
@@ -252,9 +154,6 @@ class SearchDetail(private val activity: Activity,private var arguments: Bundle 
 
         }
 
-        v.openo.setOnClickListener {
-            v.order.performClick()
-        }
         v.query.customSelectionActionModeCallback = makeCustomAcMo(HistoryDB::class.java,onMenuClick(v.query))
         v.channelId.customSelectionActionModeCallback = makeCustomAcMo(FavChaDB::class.java, onMenuClick(v.channelId))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -265,6 +164,22 @@ class SearchDetail(private val activity: Activity,private var arguments: Bundle 
         v.channelId.setText(arguments.getString(CHANNELID))
 
 
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menu.add(0, DialogInterface.BUTTON_POSITIVE,0,android.R.string.search_go).setOnMenuItemClickListener {
+            onQuery(v.query.text.toString(), v.channelId.text.toString(), o, false)
+            dismiss()
+            true
+        }.setIcon(R.drawable.send).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        if(canBeNext){
+            menu.add(0, DialogInterface.BUTTON_NEUTRAL,1,"Next page").setOnMenuItemClickListener {
+                onQuery(v.query.text.toString(), v.channelId.text.toString(), o, true)
+                dismiss()
+                true
+            }
+        }
+        return super.onCreateOptionsMenu(menu)
     }
 
 

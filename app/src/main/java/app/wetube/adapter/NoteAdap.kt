@@ -7,17 +7,16 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
-import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.ActionMode
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
@@ -37,8 +36,6 @@ import app.wetube.core.tryOn
 import app.wetube.item.Video
 import app.wetube.service.FloatVideo
 import app.wetube.service.Yt.atPip
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.BitmapImageViewTarget
 import com.squareup.picasso.Picasso
 import java.util.Locale
 
@@ -95,14 +92,15 @@ open class NoteAdap(
     }
 
     @SuppressLint("SetTextI18n")
-    fun onBindViewHolder(holder: ItemInList, position: Int) {
+    fun onBindViewHolder(holder: ItemInList, position: Int, first: Boolean) {
 
 
        if(true) {
            val note = notes[position]
            val checkInd = holder.view.findViewById<CompoundButton>(R.id.check)
+
             holder.title.text = note.title
-            holder.subtitle.text = "Saved"
+            holder.subtitle.visibility = View.GONE
             val d = holder.imageView
             holder.view.contentDescription = note.title
            holder.more.setOnLongClickListener {
@@ -381,7 +379,7 @@ open class NoteAdap(
             rowView = convertView
             viewHolder = rowView.tag as ItemInList
         }
-        onBindViewHolder(viewHolder, position)
+        onBindViewHolder(viewHolder, position, convertView == null)
         return rowView
     }
 
@@ -539,9 +537,7 @@ open class NoteAdap(
     }
 
 
-    class NoteViewHolder(val view : View) : RecyclerView.ViewHolder(view){}
 
-    class CardHolder(val view : View) : RecyclerView.ViewHolder(view){}
 
     fun actionMode(){
 

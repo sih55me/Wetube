@@ -55,7 +55,6 @@ class Jendela(context: Context):Window(context) {
     override fun getLayoutInflater(): LayoutInflater = LayoutInflater.from(lay.root.context)
 
     override fun setTitle(title: CharSequence?) {
-        lay.tul.title = title.toString()
     }
 
     override fun setTitleColor(textColor: Int) {

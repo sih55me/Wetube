@@ -11,7 +11,6 @@ import android.app.ActivityManager
 import android.app.AlertDialog
 import android.app.AppOpsManager
 import android.app.Dialog
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -41,12 +40,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Parcelable
 import android.preference.PreferenceManager
-import android.support.v4.app.NotificationCompat
-import android.support.v4.content.FileProvider
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
-import android.support.v7.graphics.Palette
+import android.app.Notification
+import android.graphics.drawable.BitmapDrawable
+import app.wetube.manage.provide.FileProvider
+import android.media.MediaMetadata
+import android.media.session.MediaSession
+import android.media.session.PlaybackState
 import android.util.Log
 import android.util.Rational
 import android.util.TypedValue
@@ -64,22 +63,27 @@ import android.view.WindowManager
 import android.view.WindowManager.InvalidDisplayException
 import android.widget.AbsListView
 import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.Toast
+import android.widget.Toolbar
 import android.window.BackEvent
 import android.window.OnBackAnimationCallback
 import android.window.OnBackInvokedCallback
 import androidx.annotation.RequiresApi
 import app.wetube.VideoView.Companion.VOLUME_DIALOG
 import app.wetube.adapter.ColorizeAdapter
+import app.wetube.adapter.FastSupportAdapter
 import app.wetube.core.DabelClick
 import app.wetube.core.Utils
 import app.wetube.core.dabelClick
+import app.wetube.core.fadeIn
 import app.wetube.core.fadeOut
 import app.wetube.core.getThemeId
 import app.wetube.core.info
@@ -89,14 +93,17 @@ import app.wetube.core.setupTheme
 import app.wetube.core.showBackButton
 import app.wetube.core.tryOn
 import app.wetube.databinding.VideoViewBinding
+import app.wetube.databinding.VideoViewInfoBinding
 import app.wetube.databinding.VolumeLayoutBinding
 import app.wetube.databinding.ZoomBinding
 import app.wetube.item.ChannelDetail
 import app.wetube.item.Video
+import app.wetube.item.VideoDetail
 import app.wetube.manage.db.VidDB
 import app.wetube.nothing.NothingPlayer
 import app.wetube.p.FadeViewHelper
 import app.wetube.p.formatTime
+import app.wetube.page.dialog.NewVidDialog
 import app.wetube.page.dialog.QRCodePage
 import app.wetube.pryektr.PlayerProyektor
 import app.wetube.service.ControlReceiver
@@ -105,9 +112,7 @@ import app.wetube.service.FloatVideo.Companion.checkOverlayDisplayPermission
 import app.wetube.service.FloatVideo.Companion.isPipServiceRunning
 import app.wetube.service.FloatVideo.Companion.requestOverlayDisplayPermission
 import app.wetube.service.Yt
-import app.wetube.window.Paper
-import com.bumptech.glide.request.animation.GlideAnimation
-import com.bumptech.glide.request.target.SimpleTarget
+import com.cocosw.bottomsheet.BottomSheet
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlaybackRate
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState
@@ -283,7 +288,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     /**
      * Use in [playercontrols]
      **/
-    lateinit var nobu : NotificationCompat.Builder
+    lateinit var nobu : Notification.Builder
     /**
      * Use in [playercontrols]
      **/
@@ -295,7 +300,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     var isInFullscreen = false
     var collape = false
     val sp by lazy { PreferenceManager.getDefaultSharedPreferences(applicationContext) }
-    val ms : MediaSessionCompat by lazy { MediaSessionCompat(this, "Yt") }
+    val ms : MediaSession by lazy { MediaSession(this, "Yt") }
     private var isnotifexist = false
     var p = 1;var max = 0f
     var isLoop = false
@@ -303,9 +308,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     var isSeeking = false
     var stillPip = false
     val playlist by lazy {
-        ColorizeAdapter(
+        FastSupportAdapter(
             this,
-            android.R.layout.simple_list_item_single_choice,
+            R.layout.playlist_item,
             mutableListOf<String>()
         )
     }
@@ -315,6 +320,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
 
     override fun onDestroy() {
+
         bin.videoview.destroy()
         if(isnotifexist) {
             tryOn {
@@ -363,43 +369,36 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         if (!resources.getBoolean(R.bool.tablet)) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
         }
-        val animatort = ValueAnimator.ofInt( 0, 255);
-        animatort.addUpdateListener { animation ->
-            val animatedValue = animation.getAnimatedValue();
-            if (animatedValue is Int) {
-                bin.videoLay.tul.background?.mutate()?.alpha = animatedValue
-                bin.videoLay.bottom.background?.mutate()?.alpha = animatedValue
-            }
-        }
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER)
         val view = bin.whoc
-        val animatorw = ValueAnimator.ofInt( window.decorView.height, vidSize.first);
-        animatorw.addUpdateListener { animation ->
+        val animatorh = ValueAnimator.ofInt( window.decorView.height, vidSize.first);
+        animatorh.addUpdateListener { animation ->
             val animatedValue = animation.getAnimatedValue();
             if (animatedValue is Int) {
                 view.layoutParams?.apply {
                     height = animatedValue
-                    if(!isTablet){
-                        bin.swipe.setPadding(0,animatedValue - vidSize.first,0,0)
-                        bin.swipe.requestLayout()
-                    }
+                    (bin.swipe.layoutParams as LinearLayout.LayoutParams).topMargin  = animatedValue - vidSize.first
+                    bin.swipe.requestLayout()
+
                 }
                 view.requestLayout()
             }
         }
-        val animatorh = ValueAnimator.ofInt( window.decorView.width, vidSize.second);
-        animatorh.addUpdateListener { animation ->
+        val animatorw = ValueAnimator.ofInt( window.decorView.width, vidSize.second);
+        animatorw.addUpdateListener { animation ->
             val animatedValue = animation.getAnimatedValue();
             if (animatedValue is Int) {
                 view.layoutParams?.apply {
                     width = animatedValue
                 }
+                view.bringToFront()
                 view.requestLayout()
+
             }
         }
         val s = AnimatorSet()
-        s.playTogether(animatorh, animatorw, animatort)
+        s.playTogether(animatorh, animatorw,)
         s.setDuration(300L)
 
 
@@ -469,8 +468,14 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         }
         bin.videoLay.bottom.setPadding(0,0,0, 0)
         bin.videoLay.tul.setPadding(0,0,0, 0)
-
+        actionBar?.setDisplayShowTitleEnabled(false)
+        if(!isTablet){
+            fadeIn(bin.videoLay.potraitFullscreen)
+        }else{
+            fadeOut(bin.videoLay.potraitFullscreen)
+        }
     }
+
     var vidSize = Pair(0,0)
 
     
@@ -479,41 +484,38 @@ class VideoView : Activity(), PlayerProyektor.Connection{
             bin.swipe.translationY = 0F
             bin.swipe.alpha = 1f
         }
+        fadeOut(bin.videoLay.potraitFullscreen)
+        actionBar?.setDisplayShowTitleEnabled(true)
         val view = bin.whoc
         vidSize= Pair(view.height, view.width)
-        val animatort = ValueAnimator.ofInt( 255,0);
-        animatort.addUpdateListener { animation ->
-            val animatedValue = animation.getAnimatedValue();
-            if (animatedValue is Int) {
-                bin.videoLay.tul.background?.mutate()?.alpha = animatedValue
-                bin.videoLay.bottom.background?.mutate()?.alpha = animatedValue
-            }
-        }
-        val animatorw = ValueAnimator.ofInt( view.height, window.decorView.height);
-        animatorw.addUpdateListener { animation ->
+
+        val animatorh = ValueAnimator.ofInt( view.height, window.decorView.height);
+        animatorh.addUpdateListener { animation ->
             val animatedValue = animation.getAnimatedValue();
             if (animatedValue is Int) {
                 view.layoutParams?.apply {
                     height = animatedValue
-                    if(!isTablet){
-                        bin.swipe.setPadding(0,animatedValue - vidSize.first,0,0)
-                    }
+                        (bin.swipe.layoutParams as LinearLayout.LayoutParams).topMargin  = animatedValue - vidSize.first
+                        bin.swipe.requestLayout()
+
                 }
                 view.requestLayout()
             }
         }
-        val animatorh = ValueAnimator.ofInt( view.width, window.decorView.width);
-        animatorh.addUpdateListener { animation ->
+        val animatorw = ValueAnimator.ofInt( vidSize.second, window.decorView.width);
+        animatorw.addUpdateListener { animation ->
             val animatedValue = animation.getAnimatedValue();
             if (animatedValue is Int) {
                 view.layoutParams?.apply {
                     width = animatedValue
                 }
+                view.bringToFront()
                 view.requestLayout()
+
             }
         }
         val s = AnimatorSet()
-        s.playTogether(animatorh, animatorw, animatort)
+        s.playTogether(animatorh, animatorw)
         s.setDuration(300L)
 
         val r = Runnable {
@@ -541,12 +543,12 @@ class VideoView : Activity(), PlayerProyektor.Connection{
             }
 
             lockPot = pot
+            bin.videoLay.toggleFullScreen.setImageResource(R.drawable.exit_fullscreen)
             bin.videoLay.toggleFullScreen.contentDescription =
                 getString(R.string.exit_fullscreen)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 bin.videoLay.toggleFullScreen.tooltipText = getString(R.string.exit_fullscreen)
             }
-            bin.videoLay.toggleFullScreen.setImageResource(R.drawable.exit_fullscreen)
             if(addFlagToWin){
                 window.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_ATTACHED_IN_DECOR)
                 window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
@@ -912,7 +914,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     }
 
 
-    val c = object: MediaSessionCompat.Callback(){
+    val c = object: MediaSession.Callback(){
         override fun onPlay() {
             l.play()
         }
@@ -993,6 +995,16 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(false)
         }
+        if(sp.getBoolean("show_playlist_control", false)){
+            bin.playlistCon.visibility = View.VISIBLE
+            bin.prevV.setOnClickListener {
+                prev()
+            }
+            bin.nextV.setOnClickListener {
+                next()
+            }
+        }
+        actionBar?.setDisplayShowTitleEnabled(false)
         bin.videoLay.tul.popupTheme = getThemeId()
         fulldia = object :Dialog(this, getThemeId()){
             init {
@@ -1070,6 +1082,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
             }
         }else{
             bin.vidlay.setPadding(0,translut.mStatusBarHeight,0,0)
+        }
+        bin.title.setOnClickListener {
+            showDialog(DESC_DIALOG)
         }
         window.decorView.isEnabled = !isTv
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
@@ -1184,6 +1199,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
             }
         }
+        var changeABI = fun(p:PlayerState){}
         var erdialog = AlertDialog.Builder(this, getThemeId()).setTitle(android.R.string.VideoView_error_title).create()
         ms.setCallback(c)
         ll = object : AbstractYouTubePlayerListener() {
@@ -1293,8 +1309,8 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     ms.setMetadata(
-                        MediaMetadataCompat.Builder()
-                            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration.toInt().toLong() * 1000L)
+                        MediaMetadata.Builder()
+                            .putLong(MediaMetadata.METADATA_KEY_DURATION, duration.toInt().toLong() * 1000L)
                             .build()
                     )
                 }
@@ -1328,10 +1344,18 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                             .alpha(t).scaleX(t).scaleY(t)
                     }
                     bin.videoLay.tul.animate().translationY(0F)
-
+                    val te = bin.videoLay.theEnd
+                    if(te.visibility == View.VISIBLE) {
+                        val t = 0F
+                        te.alpha = 1f
+                        te.animate().alpha(t).scaleX(t).scaleY(t).withEndAction {
+                            te.visibility = View.GONE
+                        }
+                    }
 
                     bin.videoLay.root.background = null
                 }
+                changeABI(state)
                 play = when (state) {
                     PlayerState.PLAYING -> {
                         r()
@@ -1349,27 +1373,12 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                             val note = d?.get(p + 1) as Video
                             val d = windowManager.defaultDisplay
                             Picasso.get().load("https://i.ytimg.com/vi/${note.videoId}/hqdefault.jpg").error(ColorDrawable(Color.BLACK)).into(object : Target{
-                                fun setResource(resource: Bitmap?) {
-                                    if(resource == null)return
-                                    Palette.from(resource).generate{b->
-                                        (b?.dominantSwatch ?: b?.darkVibrantSwatch)?.let {
-                                            bin.videoLay.ntitle.setTextColor(it.rgb)
-                                            bin.videoLay.ninfo.setTextColor(it.rgb)
-                                        }
-
-
-                                    }
-
-
-
-                                }
 
                                 override fun onBitmapLoaded(
                                     bitmap: Bitmap?,
                                     from: Picasso.LoadedFrom?
                                 ) {
                                     (bin.videoLay.imageView4).setImageBitmap(bitmap)
-                                    setResource(bitmap)
                                 }
 
                                 override fun onBitmapFailed(
@@ -1400,7 +1409,15 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
                         }
                         else{
-                            bin.videoLay.root.background = ColorDrawable(getColor(R.color.black))
+                            val vd = bin.videoLay.theEnd
+                            if(vd.visibility != View.VISIBLE) {
+                                vd.alpha = 0f
+                                vd.visibility = View.VISIBLE
+                                val t = 1F
+                                vd.animate()
+                                    .alpha(t).scaleX(t).scaleY(t)
+                            }
+                            bin.videoLay.root.background = ColorDrawable(resources.getColor(R.color.black))
                         }
                         false
                     }
@@ -1421,7 +1438,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     }
                 }
 
-                bin.videoLay.loadingVideo.fadeSize(0F)
+                bin.videoLay.loadingVideo.visibility = View.GONE
                 if (state == PlayerState.PLAYING) {
                     normalCursor.run()
                     fadeOut(bin.videoLay.errorContainer)
@@ -1461,11 +1478,11 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
                     bin.videoLay.pausePlay.also {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            it.tooltipText = getString(R.string.pause)
+                            it.tooltipText = getString(R.string.play)
                         }
                     }
                 } else if (state == PlayerState.BUFFERING) {
-                    bin.videoLay.loadingVideo.fadeSize(1F)
+                    bin.videoLay.loadingVideo.visibility = View.VISIBLE
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         window.decorView.pointerIcon = PointerIcon.getSystemIcon(this@VideoView,
                             PointerIcon.TYPE_WAIT)
@@ -1515,6 +1532,62 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     it.setContentDescription(getString(R.string.pause))
                 }
             }
+            if(sp.getBoolean("showControllerSecondaryCenter", false)){
+                controlStub.also { s ->
+                    s.layoutResource = R.layout.controler_vid
+                    s.setOnInflateListener { _, v ->
+                        v.findViewById<View>(R.id.player_control_rewind)?.setOnClickListener {
+                            now = now - skipDuraction
+                            l.seekTo(now)
+                        }
+                        v.findViewById<View>(R.id.player_control_forward)?.setOnClickListener {
+                            now = now + skipDuraction
+                            l.seekTo(now)
+                        }
+
+                        v.findViewById<ImageView>(R.id.player_control_pp)?.also{
+                            it.setOnClickListener(p)
+                            changeABI = fun(p:PlayerState){
+                                when(p){
+                                    PlayerState.PLAYING -> {
+                                        it.setImageResource(R.drawable.pause)
+                                        it.setContentDescription(
+                                            bin.videoLay.pausePlay.getContext().getString(R.string.pause)
+                                        )
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            it.tooltipText = bin.videoLay.pausePlay.getContext().getString(R.string.pause)
+                                        }
+
+                                    }
+                                    PlayerState.PAUSED -> {
+                                        it.setImageResource(R.drawable.play)
+                                        it.setContentDescription(
+                                            getString(R.string.play)
+                                        )
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            it.tooltipText = getString(R.string.play)
+                                        }
+                                    }
+                                    PlayerState.ENDED -> {
+                                        it.setImageResource(R.drawable.replay)
+                                        it.setContentDescription(
+                                            getString(R.string.play)
+                                        )
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            it.tooltipText = getString(R.string.play)
+                                        }
+
+                                    }
+                                    else -> Unit
+                                }
+                            }
+                        }
+                    }
+
+                    s.inflate()
+                }
+            }
+            potraitFullscreen.visibility = View.VISIBLE
             pausePlay.setOnClickListener(p)
             toggleFullScreen.setOnClickListener {
                 if(!lockPot){
@@ -1530,12 +1603,8 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                 }
 
             }
-
-            toggleFullScreen.setOnLongClickListener {
-                if(!resources.getBoolean(R.bool.tablet) and !isInFullscreen){
-                    showDialog(VF_DIALOG)
-                }
-                true
+            potraitFullscreen.setOnClickListener {
+                showDialog(VF_DIALOG)
             }
             val o = object : DabelClick() {
                 override fun onDoubleClick(v: View?) {
@@ -1649,14 +1718,16 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         }
         bin.videoLay.playerControlForward.dabelClick {
             if (it) {
-                l.seekTo(now + skipDuraction)
+                now = now + skipDuraction
+                l.seekTo(now)
             }
         }
 
 
         bin.videoLay.playerControlRewind.dabelClick {
             if (it) {
-                l.seekTo(now - skipDuraction)
+                now = now - skipDuraction
+                l.seekTo(now)
             }
         }
         nList()
@@ -1847,45 +1918,6 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                         from: Picasso.LoadedFrom?
                     ) {
                         thumb = resource
-                        if(!transColor)return //job done if transColor disable
-                        if(resource != null){
-                            Palette.from(resource).generate{b->
-                                if(b == null)return@generate
-
-                                (b.darkVibrantSwatch?:b.darkMutedSwatch?:b.dominantSwatch)?.let {
-
-                                    bin.videoLay.duraction.setTextColor(it.titleTextColor)
-                                    window.setBackgroundDrawable(ColorDrawable(it.rgb))
-                                    bin.videoLay.tul.setBackgroundResource(R.drawable.actionbar_trans)
-                                    bin.videoLay.tul.backgroundTintList = ColorStateList.valueOf(it.rgb)
-                                    bin.videoLay.bottom.setBackgroundResource(R.drawable.bottom)
-                                    bin.videoLay.bottom.backgroundTintList = ColorStateList.valueOf(it.rgb)
-                                    bin.plti.setTextColor(it.bodyTextColor)
-                                    bin.title.setTextColor(it.titleTextColor)
-                                    with(bin.playlist){
-                                        divider = ColorDrawable(it.titleTextColor)
-                                        dividerHeight = til.dpToPx(1F).toInt()
-                                    }
-                                    with(playlist) {
-                                        color = it.titleTextColor
-                                        tryOn {
-                                            notifyDataSetChanged()
-                                        }
-                                    }
-                                }
-                                val matchUi = fun(it: Palette.Swatch){
-                                    bin.videoLay.duraction.backgroundTintList = ColorStateList.valueOf(it.rgb)
-                                    bin.videoLay.duraction.setTextColor(it.rgb)
-                                    bin.videoLay.duraction.setShadowLayer(10F,0F,0F,it.titleTextColor)
-                                    changeButtonColor(Pair(it.rgb, it.rgb))
-
-                                }
-                                (b.lightVibrantSwatch?:b.lightMutedSwatch)?.let {
-                                    changeSeekbarColor((it.rgb))
-                                    matchUi(it)
-                                }
-                            }
-                        }
                         setTaskDescription(ActivityManager.TaskDescription(noted?.title, resource, window.statusBarColor))
                     }
 
@@ -1915,7 +1947,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     private fun blubblub(){
         // Create a bubble intent.
 
-        val bubbleIntent = PendingIntent.getActivity(this, 0, Intent(this, MenuActivity::class.java).addFlags( Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        val bubbleIntent = PendingIntent.getActivity(this, 0, Intent(this, ActivityDialog::class.java).addFlags( Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_MUTABLE)
 
 
@@ -1973,6 +2005,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     }
 
     companion object{
+
         const val  PLAY_ACTION = "pauseBtn"
         const val PAUSE_ACTION = "playBtn"
         const val REW_ACTION = "rewBtn"
@@ -1983,7 +2016,8 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         const val DEL_DIALOG = 4
         const val VF_DIALOG = 5
         const val QV_DIALOG = 6
-        const val REPLAY_DIALOG = 7
+        const val DESC_DIALOG = 7
+        const val SHARE_OPTION_DIALOG = 8
     }
 
     fun View.fadeSize(much:Float){
@@ -2090,8 +2124,79 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
     override fun onCreateDialog(id: Int): Dialog? {
         return when(id){
+            SHARE_OPTION_DIALOG->{
+                val i = ArrayAdapter(this, android.R.layout.simple_list_item_1,arrayOf("Video Link","Video Link using QR", "Video Thumbnail"))
+                AlertDialog.Builder(this@VideoView).apply {
+                    setTitle(R.string.share)
+                    setIcon(R.drawable.share)
+                    setOnDismissListener {
+                        removeDialog(id)
+                    }
+                    setSingleChoiceItems(i, -1) { d, index ->
+                        d.dismiss()
+                        when(index){
+                            0 ->{
+                                val d = windowManager.defaultDisplay
+                                Picasso.get()
+                                    .load("https://i.ytimg.com/vi/${video_id}/hqdefault.jpg")
+                                    .error(R.drawable.unhappy)
+                                    .into(object : Target {
+                                        override fun onBitmapLoaded(
+                                            bitmap: Bitmap?,
+                                            from: Picasso.LoadedFrom?
+                                        ) {
+                                            if(bitmap == null){
+                                                info("Failed to share thumbnail")
+                                                return
+                                            }
+                                            shareImageandText(bitmap)
+                                        }
+
+                                        override fun onBitmapFailed(
+                                            e: java.lang.Exception?,
+                                            errorDrawable: Drawable?
+                                        ) {
+                                            info("Failed to share thumbnail")
+                                        }
+
+                                        override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+
+                                        }
+
+
+                                    })
+                            }
+                            1 ->{
+                                runOnUiThread{
+                                    Bundle().also {b->
+                                        b.putString("txt", video_id)
+                                        showDialog(QR_DIALOG,b)
+                                    }
+                                }
+                            }
+                            2 ->{
+                                if (video_id.isNotEmpty()) {
+                                    val shareIntent = Intent()
+                                    val stxt = "youtube.com/watch?v=${video_id}"
+                                    shareIntent.action = Intent.ACTION_SEND
+                                    shareIntent.type = "text/plain"
+                                    shareIntent.putExtra(Intent.EXTRA_TEXT, stxt);
+                                    startActivity(Intent.createChooser(shareIntent, "Share Via"))
+                                }
+                            }
+                        }
+                    }
+
+
+                }.create()
+            }
             200 -> {
+                val t = Toolbar(this@VideoView)
+                t.setTitle("Zoom Video")
+                t.setNavigationIcon(R.drawable.close)
+
                 AlertDialog.Builder(this@VideoView, if(!lockPot) this@VideoView.getThemeId() else 0).apply {
+                    setCustomTitle(t)
                     val b = ZoomBinding.inflate(layoutInflater)
                     b.x.setOnZoomInClickListener {_->
                         bin.videoview.let{ y->
@@ -2189,6 +2294,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                             window!!.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
                         }
                     }
+                    t.setNavigationOnClickListener {
+                        dismiss()
+                    }
                     if(!lockPot){
                         window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
                         if (!isInFullscreen) {
@@ -2265,7 +2373,13 @@ class VideoView : Activity(), PlayerProyektor.Connection{
             VOLUME_DIALOG -> {
                 object : AlertDialog(this@VideoView, this.getThemeId()){
                     init {
-                        setTitle("Volume")
+                        val t = Toolbar(this@VideoView)
+                        t.setTitle("Volume")
+                        t.setNavigationIcon(R.drawable.close)
+                        t.setNavigationOnClickListener {
+                            dismiss()
+                        }
+                        setCustomTitle(t)
                         volView.releaseParent()
                         setView(volView)
                         if(!lockPot){
@@ -2308,57 +2422,60 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     }
                 }
             }
+            DESC_DIALOG -> D()
             ADD_DIALOG -> {
-                val title = EditText(this@VideoView)
-                title.hint = getString(R.string.nv)
-                title.setText(this.title)
-                title.setHint(R.string.nvi)
-                title.setSingleLine()
-                title.maxLines = 1
-                title.isSingleLine = true
-                title.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-                android.app.AlertDialog.Builder(this)
-                    .setTitle("Add Video")
-                    .setView(title)
-                    .setNegativeButton(android.R.string.cancel,null)
-                    .setPositiveButton(getString(R.string.add)){ _, _->
-                        if(title.text.isNotEmpty()){
-                            db.doing {
-                                it.insert(Video(0, title.text.toString(), video_id))
-                                val n =
-                                    it.listAsList().last()
-                                noteId = n.id
-                                p = it.listAsList().size - 1
-                                Yt.apply {
-                                    pos = p
-                                    link = n.id
-                                }
-                                noted = n
+                NewVidDialog.new(this, video_id,){
+                    db.doing {
+                        val n =
+                            it.listAsList().last()
+                        noteId = n.id
+                        p = it.listAsList().size - 1
+                        Yt.apply {
+                            pos = p
+                            link = n.id
+                        }
+                        noted = n
 
-                                this.title = n.title
-                                setTitle(n.title)
+                        this.title = n.title
+                        setTitle(n.title)
 
-                                snackBar("Added")
+                        snackBar("Added")
 
-                                checkStateSave(true)
-                                playlist.clear()
-                                intent.getParcelableArrayExtra("playlist")?.forEach {
-                                    val text : String = when(it){
-                                        is Video -> it.title
-                                        else -> it.toString()
-                                    }
-
-                                    playlist.add(text)
-                                }
-                                playlist.notifyDataSetChanged()
-
+                        checkStateSave(true)
+                        playlist.clear()
+                        intent.getParcelableArrayExtra("playlist")?.forEach {
+                            val text : String = when(it){
+                                is Video -> it.title
+                                else -> it.toString()
                             }
+
+                            playlist.add(text)
                         }
-                        else{
-                            snackBar("The title must not be empty!")
+                        playlist.notifyDataSetChanged()
+
+                    }
+                }.also {
+                    it.bin.editTextText4.isEnabled = false
+                    if(!lockPot){
+                        it.window?.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+                        it.window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        if (!isInFullscreen) {
+                            it.window!!.attributes?.height = bin.swipe.height
+                            it.window!!.attributes?.width = bin.swipe.width
+                            it.window!!.attributes?.x = bin.swipe.x.toInt()
+                            it.window!!.attributes?.gravity = Gravity.BOTTOM
+                            it.window?.setWindowAnimations(android.R.style.Animation_InputMethod)
+                        } else {
+                            val s = Point()
+                            windowManager.defaultDisplay.getSize(s)
+                            val d = this@VideoView.windowManager.defaultDisplay
+                            it.window!!.attributes?.height = ViewGroup.LayoutParams.MATCH_PARENT
+                            it.window!!.attributes?.width = d.height
+                            it.window!!.attributes?.gravity = Gravity.END
+                            it.window?.setWindowAnimations(android.R.style.Animation_Translucent)
                         }
-                    }.apply {
-                    }.create()
+                    }
+                }
             }
             DEL_DIALOG -> {
                 android.app.AlertDialog.Builder(this)
@@ -2376,14 +2493,20 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     }.create()
             }
             VF_DIALOG -> {
+                val t = Toolbar(this@VideoView)
                 AlertDialog.Builder(this@VideoView, if(!lockPot) this@VideoView.getThemeId() else 0).apply {
-                    setTitle(R.string.vefu)
+                    t.setTitle(R.string.vefu)
+                    t.setNavigationIcon(R.drawable.back)
+                    setCustomTitle(t)
                     setMessage(R.string.vefume)
                     setNegativeButton(android.R.string.cancel, null)
                     setPositiveButton(R.string.enter) { _, _ ->
                         enterFullscreen(true)
                     }
                 }.create().apply{
+                    t.setNavigationOnClickListener {
+                        dismiss()
+                    }
                     if(!lockPot){
                         window?.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
                         window?.setWindowAnimations(android.R.style.Animation_InputMethod)
@@ -2412,7 +2535,8 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
     override fun onPrepareDialog(id: Int, dialog: Dialog?) {
         val d = this@VideoView.windowManager.defaultDisplay
-        if((id == VOLUME_DIALOG) or (id == QR_DIALOG) or (id == 200) or (id == QV_DIALOG)){
+        val isSheet = (id == VOLUME_DIALOG) or (id == QR_DIALOG) or (id == 200) or (id == QV_DIALOG)  or (id == ADD_DIALOG)
+        if(isSheet){
             dialog?.setOnDismissListener {
                 dialogStack--
                 if((dialogStack == 0) and isInFullscreen){
@@ -2427,7 +2551,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         }
         dialog?.window?.let { configNotchWindow(it) }
 
-        if((id == VOLUME_DIALOG) or (id == QR_DIALOG) or (id == 200) or (id == QV_DIALOG)){
+        if(isSheet){
             dialog?.setOnShowListener {
 
                 dialogStack++
@@ -2505,14 +2629,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
 
     private fun setUiState(show:Boolean){
-        if(show) {
-            bin.videoLay.tul.background?.mutate()?.alpha = 255
 
-            try{ actionBar?.show() }catch (_:Exception){}
-        }else {
-            bin.videoLay.tul.background?.mutate()?.alpha = 0
-            try{ actionBar?.show() }catch (_:Exception){}
-        }
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
@@ -2526,14 +2643,14 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     }
 
 
-    fun getPlayBackState(): PlaybackStateCompat{
+    fun getPlayBackState(): PlaybackState{
 
-        return PlaybackStateCompat.Builder()
+        return PlaybackState.Builder()
             .setState(
-                if (play) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED,
+                if (play) PlaybackState.STATE_PLAYING else PlaybackState.STATE_PAUSED,
                now.toLong() * 1000L, 1F
             )
-            .setActions(PlaybackStateCompat.ACTION_SEEK_TO or PlaybackStateCompat.ACTION_SKIP_TO_NEXT or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or PlaybackStateCompat.ACTION_PLAY_PAUSE)
+            .setActions(PlaybackState.ACTION_SEEK_TO or PlaybackState.ACTION_SKIP_TO_NEXT or PlaybackState.ACTION_SKIP_TO_PREVIOUS or PlaybackState.ACTION_PLAY_PAUSE)
             .build()
     }
 
@@ -2563,38 +2680,38 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     private fun playercontrols(play : Boolean){
         //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 //            ms.setMetadata(
-//                MediaMetadataCompat.Builder()
+//                MediaMetadata.Builder()
 //                    .putString(
-//                        MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE,
+//                        MediaMetadata.METADATA_KEY_DISPLAY_TITLE,
 //                        noted?.title
 //                    )
 //                    .putBitmap(
-//                        MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON,
+//                        MediaMetadata.METADATA_KEY_DISPLAY_ICON,
 //                        thumb
-//                    ).putRating("android.media.metadata.RATING", RatingCompat.newHeartRating(true))
+//                    ).putRating("android.media.metadata.RATING", Rating.newHeartRating(true))
 //                    .build()
 //            )
 //        }
         val cI = "10000"
         val i = Intent(applicationContext, app.wetube.service.ControlReceiver::class.java)
         val fi = openVideoNTicket(this, noted?:return,p, intent = roundIntent)
-        val a = NotificationCompat.Action(
+        val a = Notification.Action(
             if(!play)R.drawable.play else R.drawable.pause, if (play)getString(R.string.pause) else getString(R.string.play),
             PendingIntent.getBroadcast(applicationContext, 2, i.putExtra("state", play),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         )
 
-        val f = NotificationCompat.Action(
+        val f = Notification.Action(
             R.drawable.close, getString(R.string.close),
             PendingIntent.getActivity(applicationContext, 3, fi.putExtra("finish", true),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         )
-        nobu = NotificationCompat.Builder(this, cI)
+        nobu = Notification.Builder(this, cI)
             .setSmallIcon(R.drawable.music_play)
             .setContentTitle(title)
             .setContentText(title)
             .setAutoCancel(true)
-            .setStyle(android.support.v4.media.app.NotificationCompat.MediaStyle().setMediaSession(ms.sessionToken))
+            .setStyle(Notification.MediaStyle().setMediaSession(ms.sessionToken))
             .setLargeIcon(thumb)
             .setContentIntent(
                 PendingIntent.getActivity(this, 1, roundIntent,
@@ -2635,6 +2752,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
             android.R.id.home -> {
                 onNavigateUp()
             }
+            R.id.share_ic -> showDialog(SHARE_OPTION_DIALOG)
             R.id.thumbnail ->{
                 val d = windowManager.defaultDisplay
                 Picasso.get()
@@ -2666,7 +2784,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
                     })
             }
-            R.id.QC ->{
+            R.id.qr ->{
                 runOnUiThread{
                     Bundle().apply {
                         val b = this
@@ -2699,7 +2817,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                 l.setPlaybackRate(PlaybackRate.RATE_2)
             }
 
-            R.id.vidid ->{
+            R.id.shareUrl ->{
                 if (video_id.isNotEmpty()) {
                     val shareIntent = Intent()
                     val stxt = "youtube.com/watch?v=${video_id}"
@@ -2729,7 +2847,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
     fun reloadPref(){
 
-        if(!sp.getBoolean("show_video", false)){
+        if(!sp.getBoolean("show_video", true)){
             window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }else{
             window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
@@ -2939,6 +3057,59 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
     override fun getYPlayer(): YouTubePlayer {
         return l
+    }
+
+
+
+    internal inner class D() : AlertDialog(this, this.getThemeId()){
+        internal val d = VideoViewInfoBinding.inflate(layoutInflater)
+        init {
+            val t = Toolbar(this@VideoView)
+            t.setTitle("Description")
+            t.setNavigationIcon(R.drawable.close)
+            t.setNavigationOnClickListener {
+                dismiss()
+            }
+            setCustomTitle(t)
+            setView(d.root)
+            d.hint.setText(noted?.title)
+            if(noted is VideoDetail){
+                d.desc.setText((noted as VideoDetail).description)
+                d.cenel.apply{
+                    isEnabled = true
+                    val c = (noted as VideoDetail).channel
+                    setText(c.title)
+                    setOnClickListener {
+                        startActivity(Intent(this@VideoView, ChannelInfo::class.java).putExtra("id", c.id).putExtra("name", c.title))
+                    }
+                }
+            }
+
+            if(!lockPot){
+                window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                if (!isInFullscreen) {
+                    window?.setWindowAnimations(android.R.style.Animation_InputMethod)
+                    window!!.attributes?.height = bin.swipe.height
+                    window!!.attributes?.width = bin.swipe.width
+                    window!!.attributes?.x = bin.swipe.x.toInt()
+                    window!!.attributes?.gravity = Gravity.BOTTOM
+                } else {
+                    val s = Point()
+                    windowManager.defaultDisplay.getSize(s)
+                    window?.setWindowAnimations(android.R.style.Animation_Translucent)
+                    val d = this@VideoView.windowManager.defaultDisplay
+                    window!!.attributes?.height = ViewGroup.LayoutParams.MATCH_PARENT
+                    window!!.attributes?.width = d.height
+                    window!!.attributes?.gravity = Gravity.END
+                }
+            }
+
+        }
+
+        override fun show() {
+            this.setCanceledOnTouchOutside(true)
+            super.show()
+        }
     }
 
 

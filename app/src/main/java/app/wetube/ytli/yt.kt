@@ -2,6 +2,8 @@ package app.wetube.ytli
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.DialogInterface
+import android.graphics.Bitmap
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
@@ -9,6 +11,7 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -16,6 +19,8 @@ import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import app.wetube.R
+import app.wetube.core.AlertController
+import app.wetube.window.Kertas
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayerBridge
@@ -177,10 +182,16 @@ class WTP @JvmOverloads constructor(
 
 
         settings.apply {
+            webChromeClient= object : WebChromeClient(){
+                override fun getDefaultVideoPoster(): Bitmap? {
+                    return Bitmap.createBitmap(1,1, Bitmap.Config.RGB_565)
+                }
+
+
+            }
             javaScriptEnabled = true
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
-
             cacheMode = WebSettings.LOAD_NO_CACHE
         }
 
@@ -226,7 +237,8 @@ class WTP @JvmOverloads constructor(
     override fun onVideoQuality(instance: YouTubePlayer, quality: String) {
 
         try{ qualityListener(Json.decodeFromString(quality)) }catch (_: Exception){
-            Toast.makeText(context,quality,0).show()
+            if(quality == "undefined")return
+            Toast.makeText(context,quality, Toast.LENGTH_SHORT).show()
         }
 
     }
@@ -250,7 +262,7 @@ internal fun readHTMLFromUTF8File(inputStream: InputStream): String {
             val bufferedReader = BufferedReader(InputStreamReader(inputStream, "utf-8"))
             return bufferedReader.readLines().joinToString("\n")
         } catch (e: Exception) {
-            throw RuntimeException("Can't parse HTML file.")
+            throw RuntimeException("Can't parse HTML file.", e)
         }
     }
 }

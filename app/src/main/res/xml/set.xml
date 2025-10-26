@@ -2,21 +2,20 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    xmlns:app="http://schemas.android.com/apk/res-auto"
 
 
     <PreferenceCategory android:title="@android:string/search_go">
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="true"
             android:icon="?android:attr/actionModeWebSearchDrawable"
             android:key="ss"
             android:title="Strict SafeSearch" />
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="false"
             android:icon="@drawable/playlist_remove"
             android:key="clear_cache"
             android:title="@string/delete_result_if_invisible" />
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="false"
             android:icon="@drawable/playlist_add"
             android:key="auto_add"
@@ -40,13 +39,12 @@
     <PreferenceCategory android:title="@string/apr">
 
 
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:icon="@drawable/appe"
-            android:key="forceWeIcon"
-            android:summary="Force using Wetube icon in every theme"
-            android:title="Force using Wetube Icon" />
 
+        <SwitchPreference
+            android:title="Hardware Accelerated"
+            android:defaultValue="true"
+            android:icon="@drawable/notch"
+            android:key="hardware_accelerated"/>
 
 
 
@@ -61,7 +59,7 @@
             android:title="@string/theme" />
 
 
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="true"
             android:icon="@drawable/tab"
             android:key="tabmod"
@@ -100,7 +98,7 @@
     <PreferenceCategory
         android:title="@string/adv">
 
-        <CheckBoxPreference
+        <SwitchPreference
             android:title="Make available in lock screen"
             android:summaryOff="You need to unlock your phone to access the app"
             android:summaryOn="You can access the app without unlock your phone"
@@ -114,7 +112,7 @@
             <intent
                 android:targetClass="app.wetube.secret.Intro"
                 android:targetPackage="app.wetube">
-                <extra android:name="again" android:value="true"/>
+
             </intent>
 
         </Preference>

@@ -20,7 +20,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.preference.PreferenceManager
-import android.support.v4.content.FileProvider
+import app.wetube.manage.provide.FileProvider
 import android.view.ActionMode
 import android.view.LayoutInflater
 import android.view.Menu
@@ -47,10 +47,6 @@ import app.wetube.item.VideoDetail
 import app.wetube.manage.db.FavChaDB
 import app.wetube.manage.db.VidDB
 import app.wetube.openVideoNTicket
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.drawable.GlideDrawable
-import com.bumptech.glide.request.animation.GlideAnimation
-import com.bumptech.glide.request.target.SimpleTarget
 import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
 import kotlinx.coroutines.Runnable
@@ -323,7 +319,7 @@ class ChannelVideo:Fragment(), SearchAdap.OnAdapterListener {
                 val shareIntent = Intent()
                 when(type){
                     ShareType.URL -> {
-                        val stxt = "youtube.com/watch?v=${video.videoId}"
+                        val stxt = "https://youtube.com/watch?v=${video.videoId}"
                         shareIntent.action = Intent.ACTION_SEND
                         shareIntent.type = "text/plain"
                         shareIntent.putExtra(Intent.EXTRA_TEXT, stxt)
@@ -394,7 +390,7 @@ class ChannelVideo:Fragment(), SearchAdap.OnAdapterListener {
                             setType("image/png")
 
                         }
-                        val stxt = "youtube.com/watch?v=${video.videoId}"
+                        val stxt = "https://youtube.com/watch?v=${video.videoId}"
                         shareIntent.action = Intent.ACTION_SEND
                         shareIntent.type = "text/plain"
                         shareIntent.putExtra(Intent.EXTRA_TEXT, stxt)
@@ -407,23 +403,10 @@ class ChannelVideo:Fragment(), SearchAdap.OnAdapterListener {
             }
             Option.Save -> {
                 db.doing {
-                    if (db.listAsList().size < sp.getInt("limit", 50)) {
-
-                        db.insert(video.title, video.videoId)
-                        activity!!!!.runOnUiThread {
-                            Toast.makeText(activity!!!!,
-                                "Video added",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-
-                    }else Toast.makeText(activity!!!!,
-                        "Unable to add video",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-
-
+                    it.insert(video.title, video.videoId)
+                    activity!!!!.runOnUiThread {
+                        info("Video added",)
+                    }
                 }
 
             }

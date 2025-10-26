@@ -1,6 +1,7 @@
 package app.wetube.item
 
 import android.annotation.SuppressLint
+import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
 
@@ -17,7 +18,8 @@ data class VideoDetail(
     var description: String,
     var thumb: String,
     var channel: ChannelDetail,
-):Video(id,title, videoId) {
+):Video(id,title, videoId), SmthFromInternet {
+
 
     constructor(
         videoId: String,
@@ -26,6 +28,17 @@ data class VideoDetail(
         thumb: String,
         channel: ChannelDetail,
     ) : this(0, title, videoId,description,thumb,channel)
+    var postDate = ""
+    override val bun: Bundle = Bundle()
+
+    init {
+        bun.putString("title", title)
+        bun.putString("videoId", videoId)
+        bun.putString("description", description)
+        bun.putString("thumb", thumb)
+        bun.putParcelable("channel", channel)
+        bun.putString("postDate", postDate)
+    }
 
     @SuppressLint("NewApi")
     override fun toString(): String = (
@@ -83,6 +96,5 @@ data class VideoDetail(
     }
 
 
-    var postDate = ""
 
 }

@@ -1,12 +1,14 @@
 package app.wetube.item
 
+import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
 
 data class ChannelDetail(
     val title: String,
-    val id: String
-) :Parcelable{
+    val id: String,
+) :Parcelable,SmthFromInternet {
+    override val bun: Bundle = Bundle()
     var description = ""
     var thumbnail = ""
     var born = ""
@@ -14,6 +16,17 @@ data class ChannelDetail(
     var size = Pair(0,0)
 
     var genzid = ""
+
+    init {
+        bun.putString("title", title)
+        bun.putString("id", id)
+        bun.putString("description", description)
+        bun.putString("thumbnail", thumbnail)
+        bun.putString("born", born)
+        bun.putString("lived", lived)
+        bun.putIntArray("size", intArrayOf(size.first, size.second))
+        bun.putString("genzid", genzid)
+    }
     constructor(parcel: Parcel) : this(
         parcel.readString().toString(),
         parcel.readString().toString()
@@ -41,6 +54,7 @@ data class ChannelDetail(
         parcel.writeInt(size.second)
         parcel.writeString(genzid)
     }
+
 
 
 

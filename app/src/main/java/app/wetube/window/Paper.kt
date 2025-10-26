@@ -91,39 +91,6 @@ open class Paper @JvmOverloads constructor(context: Context, showActionBar : Boo
 
     val windowManager get()= window?.windowManager ?: context.getSystemService(Activity.WINDOW_SERVICE) as WindowManager
 
-    private fun attachBack(){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val b = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                object : OnBackAnimationCallback {
-                    val v get() = requireNotNull(window?.decorView?.rootView?.rootView)
-                    override fun onBackInvoked() {
-                        v.animate().scaleX(0F).scaleY(0F).alpha(0F).withEndAction {
-                            onBackPressed()
-                        }
-                    }
-
-                    override fun onBackStarted(backEvent: BackEvent) {
-                        val a = v.animate()
-
-                        if (backEvent.swipeEdge == BackEvent.EDGE_LEFT) {
-                            a.x(100F)
-                        } else {
-                            a.x(-100F)
-                        }
-                        a.scaleX(0.8F).scaleY(0.8F).alpha(0.7F)
-                    }
-
-
-                    override fun onBackCancelled() {
-                        v.animate().x(0F).scaleX(1F).scaleY(1F).alpha(1F)
-                    }
-                }
-            } else OnBackInvokedCallback {
-                onBackPressed()
-            }
-            onBackInvokedDispatcher.registerOnBackInvokedCallback(0, b)
-        }
-    }
 
 
     final fun getString(resId: Int): String{
