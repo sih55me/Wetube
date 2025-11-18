@@ -144,7 +144,6 @@ class Browser: ActivityGroup(false), FragmentManager.OnBackStackChangedListener 
                 newTabSpec("${count + 1}").also {
                     it.setContent(Intent(context.applicationContext, ContentBrow::class.java).apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
                         addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
                     })
                     it.setIndicator("New tab")

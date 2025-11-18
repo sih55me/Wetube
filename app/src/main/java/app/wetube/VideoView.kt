@@ -660,6 +660,17 @@ class VideoView : Activity(), PlayerProyektor.Connection{
 
         }
     }
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        if(isTv){
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+                onBackInvokedDispatcher.registerOnBackInvokedCallback(0){
+                    onBackPressed()
+                }
+            }
+        }
+        super.onPostCreate(savedInstanceState)
+    }
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.video_prefence, menu)
         menu?.apply{
@@ -770,6 +781,10 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                 if(play)l.pause() else l.play()
             }
 
+            KeyEvent.KEYCODE_BACK or KeyEvent.KEYCODE_ESCAPE -> {
+                onBackPressed()
+                return true
+            }
 
 
             KeyEvent.KEYCODE_F ->{
@@ -806,12 +821,15 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     if(mute) "Mute player" else "Unmute player"
                 )
             }
-            KeyEvent.KEYCODE_DPAD_DOWN ->{
-                window.openPanel(Window.FEATURE_OPTIONS_PANEL, KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MENU))
+            KeyEvent.KEYCODE_DPAD_DOWN or KeyEvent.KEYCODE_MENU ->{
+               bin.videoLay.tul.showOverflowMenu()
+                return true
             }
 
+
+
             KeyEvent.KEYCODE_DPAD_CENTER -> {
-                if(play)l.pause() else l.play()
+                if (play) l.pause() else l.play()
                 return true
             }
 
@@ -822,6 +840,13 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         }
         return super.onKeyDown(keyCode, event)
     }
+
+
+    override fun onKeyLongPress(keyCode: Int, event: KeyEvent?): Boolean {
+        return super.onKeyLongPress(keyCode, event)
+    }
+
+
 
     fun prev(){
         val d = intent.getParcelableArrayExtra("playlist")
@@ -1217,7 +1242,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     gravity = g
                     height = ViewGroup.LayoutParams.WRAP_CONTENT
                 }
-                erdialog.window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                if(!isTv){
+                    erdialog.window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                }
                 erdialog.window!!.attributes!!.dimAmount = 0F
                 erdialog.window!!.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
                 try{
@@ -2025,9 +2052,11 @@ class VideoView : Activity(), PlayerProyektor.Connection{
     }
 
     fun initVolDia(){
-        val onSeek:((Int, ImageButton) -> Unit) = {i, b->
+        val onSeek:((Int, ImageButton, Int) -> Unit) = {i, b, m->
             if(i == 0){
                 b.setImageDrawable(getDrawable(R.drawable.volume_off))
+            }else if(i < (m/2)){
+                b.setImageDrawable(getDrawable(R.drawable.volume_down))
             }else{
                 b.setImageDrawable(getDrawable(R.drawable.volume))
             }
@@ -2035,7 +2064,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         volumePlayer.volumeseek.apply {
             max = (100)
             progress = plavol
-            onSeek(progress, volumePlayer.icon)
+            onSeek(progress, volumePlayer.icon, 100)
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(
                     seekBar: SeekBar?,
@@ -2044,7 +2073,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                 ) {
                     plavol = progress.toInt()
                     l.setVolume(plavol)
-                    onSeek(progress, volumePlayer.icon)
+                    onSeek(progress, volumePlayer.icon, 100)
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -2062,7 +2091,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
         volumePhone.volumeseek.apply {
             max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
             progress = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-            onSeek(progress, volumePhone.icon)
+            onSeek(progress, volumePhone.icon, max)
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(
                     seekBar: SeekBar?,
@@ -2070,7 +2099,7 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     fromUser: Boolean,
                 ) {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress,0)
-                    onSeek(progress, volumePhone.icon)
+                    onSeek(progress, volumePhone.icon, max)
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -2098,7 +2127,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                 QRCodePage(this@VideoView, b?.getString("txt")?: return null).apply {
 
                     if(!lockPot){
-                        window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        if(!isTv) {
+                            window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        }
                         if (!isInFullscreen) {
                             window!!.attributes?.height = bin.swipe.height
                             window!!.attributes?.width = bin.swipe.width
@@ -2298,7 +2329,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                         dismiss()
                     }
                     if(!lockPot){
-                        window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        if(!isTv) {
+                            window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        }
                         if (!isInFullscreen) {
                             window!!.setWindowAnimations(android.R.style.Animation_InputMethod)
                             window!!.attributes?.height = bin.swipe.height
@@ -2350,7 +2383,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                         }
                     }
                     if(!lockPot){
-                        window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        if(!isTv) {
+                            window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        }
                         if (!isInFullscreen) {
                             window!!.setWindowAnimations(android.R.style.Animation_InputMethod)
                             window!!.attributes?.height = bin.swipe.height
@@ -2383,7 +2418,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                         volView.releaseParent()
                         setView(volView)
                         if(!lockPot){
-                            window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                            if(!isTv) {
+                                window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                            }
                             if (!isInFullscreen) {
                                 window?.setWindowAnimations(android.R.style.Animation_InputMethod)
                                 window!!.attributes?.height = bin.swipe.height
@@ -2458,7 +2495,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     it.bin.editTextText4.isEnabled = false
                     if(!lockPot){
                         it.window?.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-                        it.window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        if(!isTv) {
+                            window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        }
                         if (!isInFullscreen) {
                             it.window!!.attributes?.height = bin.swipe.height
                             it.window!!.attributes?.width = bin.swipe.width
@@ -2510,7 +2549,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
                     if(!lockPot){
                         window?.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
                         window?.setWindowAnimations(android.R.style.Animation_InputMethod)
-                        window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        if(!isTv) {
+                            window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                        }
                         if (!isInFullscreen) {
                             window!!.attributes?.height = bin.straing.height + bin.vidlay.paddingTop
                             window!!.attributes?.width = bin.straing.width
@@ -3086,7 +3127,9 @@ class VideoView : Activity(), PlayerProyektor.Connection{
             }
 
             if(!lockPot){
-                window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                if(!isTv) {
+                    window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                }
                 if (!isInFullscreen) {
                     window?.setWindowAnimations(android.R.style.Animation_InputMethod)
                     window!!.attributes?.height = bin.swipe.height

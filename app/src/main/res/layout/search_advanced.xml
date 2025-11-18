@@ -4,11 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:fillViewport="true"
-    android:paddingTop="10dp"
     android:clipToPadding="false"
+    android:paddingTop="5dp"
+    android:orientation="vertical"
     android:layout_height="match_parent">
     <LinearLayout
         android:orientation="vertical"
+
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -32,13 +34,12 @@
                     android:paddingStart="12dp"
                     android:text="Query" />
 
-                <AutoCompleteTextView
+                <EditText
                     android:id="@+id/query"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:background="@null"
-                    android:imeOptions="flagNoExtractUi|flagNoFullscreen"
                     android:padding="12dp" />
             </LinearLayout>
 
@@ -75,7 +76,7 @@
                     android:paddingStart="12dp"
                     android:text="Channel Id" />
 
-                <AutoCompleteTextView
+                <EditText
                     android:id="@+id/channelId"
                     android:background="@null"
                     android:inputType="textFilter|textNoSuggestions|textAutoComplete"
@@ -83,7 +84,6 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
 
-                    android:imeOptions="flagNoExtractUi|flagNoFullscreen"
                     android:padding="12dp" />
             </LinearLayout>
 
@@ -134,20 +134,52 @@
 
 
 
-        <AbsoluteLayout
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:elevation="5dp"
+            android:id="@+id/npl"
+            android:visibility="gone"
+            android:orientation="horizontal"
+            android:background="?android:attr/colorBackground">
+            <Button
+                android:id="@+id/np"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:pointerIcon="hand"
+                android:layout_weight="0.5"
+                style="?android:borderlessButtonStyle"
+                android:text="Next page" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp"
+            android:elevation="5dp"
+            android:orientation="horizontal"
             android:background="?android:attr/colorBackground">
             <Button
                 android:id="@+id/cf"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:pointerIcon="hand"
+                android:layout_weight="0.5"
                 style="?android:borderlessButtonStyle"
-                android:text="Clear All Field" />
-        </AbsoluteLayout>
+                android:text="@string/clear" />
+            <Button
+                android:id="@+id/search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:pointerIcon="hand"
+                android:layout_weight="1"
+                android:textColor="?android:textColorPrimaryInverse"
+                android:backgroundTint="?android:colorAccent"
+                android:text="@android:string/search_go" />
+        </LinearLayout>
+
+
 
 
 

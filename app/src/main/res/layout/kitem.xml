@@ -2,22 +2,26 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/selectableItemBackground"
+    android:background="@drawable/select_menu"
     android:clickable="true"
     android:focusable="true"
     android:gravity="center"
     android:pointerIcon="hand"
-    android:minHeight="25dp"
+    android:descendantFocusability="blocksDescendants"
+    android:minHeight="15dp"
     android:orientation="vertical">
 
 
     <ImageView
+        android:id="@android:id/icon"
         android:layout_width="24dp"
         android:layout_height="24dp"
+        android:clickable="false"
+        android:focusable="false"
         android:layout_gravity="center_vertical"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
         android:src="@drawable/video" />
 
     <TextView
@@ -30,6 +34,8 @@
         android:gravity="center_vertical"
         android:maxLines="1"
         android:singleLine="true"
+        android:clickable="false"
+        android:focusable="false"
         android:text="@string/my_profile"
         android:textSize="18sp"
         android:textStyle="bold" />

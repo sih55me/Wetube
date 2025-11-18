@@ -18,16 +18,17 @@ class SupaContainer:Application(){
         var main: SupaContainer? = null
         @JvmStatic
         fun Context.d(){
-            Thread.setDefaultUncaughtExceptionHandler(object : Thread.UncaughtExceptionHandler {
-                override fun uncaughtException(thread: Thread, e: Throwable) {
-                    val intent: Intent = Intent(applicationContext, RIP::class.java)
-                    e.printStackTrace()
-                    val em = "Wetube crash\nLogs :\n${e.stackTrace.joinToString(separator = "\n")}\n\nBecause :\n${e.message.toString().ifEmpty { e.localizedMessage.toString() }}"
-                    intent.putExtra("msg", em)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    startActivity(intent)
-                }
-            })
+            Thread.setDefaultUncaughtExceptionHandler { thread, e ->
+                val intent: Intent = Intent(applicationContext, RIP::class.java)
+                e.printStackTrace()
+                val em =
+                    "Wetube crash\nLogs :\n${e.stackTrace.joinToString(separator = "\n")}\n\nBecause :\n${
+                        e.message.toString().ifEmpty { e.localizedMessage.orEmpty().ifEmpty { "Unknown" } }
+                    }"
+                intent.putExtra("msg", em)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+            }
         }
         @JvmStatic
         fun restart(){

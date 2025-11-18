@@ -27,11 +27,13 @@ import android.widget.Gallery
 import android.widget.GridView
 import android.widget.ListView
 import android.widget.StackView
+import android.widget.Toast
 import app.wetube.ChannelInfo
 import app.wetube.R
 import app.wetube.core.Search
 import app.wetube.core.info
 import app.wetube.core.tryOn
+import app.wetube.databinding.FragmentSearchResultBinding
 import app.wetube.item.ChannelDetail
 import app.wetube.kembaliKe
 import app.wetube.manage.db.FavChaDB
@@ -41,6 +43,7 @@ import app.wetube.page.Sheet
 class SearchPeople: Sheet() {
     val db by lazy{ FavChaDB(activity!!.applicationContext) }
     var data = mutableListOf<ChannelDetail>()
+    val bin by lazy { FragmentSearchResultBinding.inflate(activity.layoutInflater) }
     val adap by lazy {
         ArrayAdapter(
             activity,
@@ -49,20 +52,24 @@ class SearchPeople: Sheet() {
         )
     }
 
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+    }
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater?,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return ListView(activity)
+        return bin.root
     }
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if(view !is ListView)return
 
-        view.adapter = adap
+        bin.list.adapter = adap
         paper.showBackButton()
         if(savedInstanceState != null){
             val d = savedInstanceState.getParcelableArray("data")
@@ -71,7 +78,16 @@ class SearchPeople: Sheet() {
                 reload()
             }
         }
-        view.setOnCreateContextMenuListener { menu, v, menuInfo ->
+        bin.back.setOnClickListener {
+            dismiss()
+        }
+        bin.search.setOnEditorActionListener { v, actionId, event ->
+            v?.text?.let {
+                search(it)
+            }
+            true
+        }
+        bin.list.setOnCreateContextMenuListener { menu, v, menuInfo ->
             val l = data[(menuInfo as AdapterView.AdapterContextMenuInfo).position]
             menu?.apply {
                 setHeaderTitle(l.title)
@@ -83,18 +99,15 @@ class SearchPeople: Sheet() {
                     clipboard.setPrimaryClip(clip)
                     true
                 }
-                addSubMenu(R.string.add).also { s->
-                    s.setHeaderTitle("Add this?")
-                    s.add(R.string.add).setOnMenuItemClickListener {
-                        db.insert(l)
-                        info("Saved")
-                        true
-                    }
-                    s.add(android.R.string.cancel)
+                add(R.string.add).setOnMenuItemClickListener {
+                    db.insert(l)
+                    info("Saved")
+                    true
                 }
+
             }
         }
-        view.onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
+        bin.list.onItemClickListener = AdapterView.OnItemClickListener { parent, view, position, id ->
             tryOn {
                 val l = data[position]
                 val i = Intent(activity!!, ChannelInfo::class.java).putExtra("id", l.id).putExtra("name", l.title)
@@ -116,6 +129,7 @@ class SearchPeople: Sheet() {
         n.setMessage("Getting data....")
         n.setIcon(R.drawable.search)
         data.clear()
+        var done=false
         s.searchChannel(
             query = text.toString(),
             max = 35,
@@ -123,10 +137,17 @@ class SearchPeople: Sheet() {
                 data.add(it)
             },
             onDone = {
+                done = true
                 n.dismiss()
                 reload()
             }
         )
+        n.setOnDismissListener {
+            if(!done){
+                s.s()
+                Toast.makeText(activity, "Searching cancelled",0).show()
+            }
+        }
         n.show()
     }
 
@@ -142,16 +163,6 @@ class SearchPeople: Sheet() {
     }
 
 
-
-    override fun onCreateOptionsMenu(menu: Menu?, inflater: MenuInflater?) {
-        menu?.let { m->
-            m.add("Request query").setIcon(app.wetube.R.drawable.go).setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_ALWAYS).setOnMenuItemClickListener {
-                    requestSm(false)
-                true
-            }
-        }
-        super.onCreateOptionsMenu(menu, inflater)
-    }
 
     private fun requestSm(closeOnCancel: Boolean) {
         if(activity == null) return

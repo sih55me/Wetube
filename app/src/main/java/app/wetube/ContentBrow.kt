@@ -11,7 +11,7 @@ class ContentBrow: Activity() {
         super.onCreate(savedInstanceState)
         val d = FrameLayout(this)
         setContentView(d)
-        d.id = R.id.hal
+        d.id = app.wetube.R.id.hal
         fragmentManager.beginTransaction().add(R.id.hal, NewTab()).commit()
     }
 }

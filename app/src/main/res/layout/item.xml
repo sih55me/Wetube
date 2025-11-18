@@ -49,7 +49,7 @@
                     android:layout_marginRight="@dimen/album_title_padding"
                     android:checked="true"
                     android:ellipsize="end"
-                    android:maxLines="2"
+                    android:maxLines="1"
                     android:text="New video"
                     android:textColor="?android:textColorPrimary"
                     android:textSize="20sp"
@@ -74,12 +74,13 @@
                 android:layout_height="40dp"
                 android:layout_margin="3dp"
                 android:padding="0dp"
+                android:clickable="true"
                 android:layout_below="@id/thumbnail"
                 android:layout_alignParentEnd="true"
                 style="?android:actionOverflowButtonStyle"
                 android:contentDescription="@string/options"
-                android:focusable="false"
-                android:focusableInTouchMode="false"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 tools:ignore="UseAppTint" />
 
 

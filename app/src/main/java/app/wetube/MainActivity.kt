@@ -30,6 +30,7 @@ import android.preference.PreferenceManager
 import android.util.SparseArray
 import android.view.ActionMode
 import android.view.Display
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
@@ -40,12 +41,20 @@ import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.WindowManager.InvalidDisplayException
 import android.view.inputmethod.BaseInputConnection
+import android.widget.Adapter
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.BaseAdapter
 import android.widget.FrameLayout
+import android.widget.ListView
+import android.widget.SimpleAdapter
 import android.widget.Toast
+import android.window.BackEvent
+import android.window.OnBackAnimationCallback
 import android.window.OnBackInvokedCallback
 import androidx.annotation.RequiresApi
 import app.wetube.core.FirstReview
+import app.wetube.core.getThemeId
 import app.wetube.core.hideBackButton
 import app.wetube.core.hideKeyBoard
 import app.wetube.core.info
@@ -56,6 +65,7 @@ import app.wetube.core.showBackButton
 import app.wetube.core.toView
 import app.wetube.core.tryOn
 import app.wetube.databinding.ActivityMainBinding
+import app.wetube.databinding.KitemBinding
 import app.wetube.page.DialogPass
 import app.wetube.page.FavCha
 import app.wetube.page.MySavedVideo
@@ -90,6 +100,42 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
     private var popBack  = Any()
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private var acmoFinBack = Any()
+
+    private inner class MenuDrawer : BaseAdapter() {
+        val items = listOf<String>(
+            getString(R.string.explore),
+            getString(R.string.favcha),
+            getString(R.string.library)
+        )
+        val iitems = listOf<Int>(
+            (R.drawable.explore),
+            (R.drawable.favcha),
+            (R.drawable.saved)
+        )
+        override fun getCount(): Int = items.size
+
+        override fun getItem(p0: Int): Any = items[p0]
+
+        override fun getItemId(p0: Int): Long = 0L
+
+        override fun getView(p0: Int, p1: View?, p2: ViewGroup?): View? {
+            var v = p1
+            var i  = v?.tag
+            if(i !is KitemBinding){
+                i  = KitemBinding.inflate(layoutInflater)
+            }
+            if(v == null){
+                v = i.root
+                i.root.tag = i
+                i.text1.setText(items[p0])
+                i.icon.setImageResource(iitems[p0])
+            }else{
+                i.text1.setText(items[p0])
+                i.icon.setImageResource(iitems[p0])
+            }
+            return v
+        }
+    }
     private val roti by lazy{ FragmentBreadCrumbs(this) }
     var mPresentation : Presentation? = null
     val f by lazy { FirstReview(this) }
@@ -201,62 +247,53 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
 
     @SuppressLint("PrivateApi")
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menu?.apply {
-            add("Search Other Channel").setOnMenuItemClickListener {
-                SearchPeople().show(fragmentManager, "soc")
-                true
-            }
 
-            add(R.string.set)?.setIcon(R.drawable.settings)
-            if (isTv) {
-                add(1,1,1,"Back Function").setOnMenuItemClickListener {
-                    if(storeAm.isNotEmpty()){
-                        actionMode?.finish()
-                        return@setOnMenuItemClickListener true
-                    }
-                    super.onBackPressed()
-                    true
-                }
-                addSubMenu(1,1,1,"Go to").apply {
-                    val l = MenuItem.OnMenuItemClickListener{
-                        when(it.title){
-                            "Explore" -> {
-                                openPage = 0
-                                changePage(0)
-                            }
-                            "Favorite channel" -> {
-                                openPage = 1
-                                changePage(1)
-                            }
-                            "Library" -> {
-                                openPage = 2
-                                changePage(2)
-                            }
-                        }
-                        true
-                    }
-                    add("Explore").setOnMenuItemClickListener(l)
-                    add("Favorite channel").setOnMenuItemClickListener(l)
-                    add("Library").setOnMenuItemClickListener(l)
-                }
-
-            }
-            add("Exit").setIcon(R.drawable.close)
-        }
         return super.onCreateOptionsMenu(menu)
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private var dBack = Any()
 
+
+
+    fun toggleDrawer(){
+        val b = bin.drawer
+        if(b.visibility == View.GONE){
+            tryOn {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                        0,
+                        dBack as OnBackInvokedCallback
+                    )
+                }
+            }
+            actionBar?.setHomeAsUpIndicator(R.drawable.back)
+            b.translationX = -b.width.toFloat()
+            b.visibility = View.VISIBLE
+            b.animate().translationX(0F)
+        }else {
+            tryOn {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    onBackInvokedDispatcher.unregisterOnBackInvokedCallback(
+
+                        dBack as OnBackInvokedCallback
+                    )
+                }
+            }
+            b.translationX = 0F
+            actionBar?.setHomeAsUpIndicator(R.drawable.menu)
+            b.animate().translationX(-b.width.toFloat()).withEndAction {
+                b.visibility = View.GONE
+            }
+        }
+    }
 
 
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
 
-            try{
-                fragmentManager.popBackStackImmediate()
-                onBackStackChanged()
-            }catch (_:Exception){}
+            showDialog(3234, null)
         }
         when (item.title) {
             "Back to..." -> {
@@ -435,6 +472,7 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
         super.onCreate(savedInstanceState)
         setupTheme()
 
+        actionBar?.navigationMode = ActionBar.NAVIGATION_MODE_STANDARD
         setContentView(bin.root)
 
         val trans = fragmentManager.beginTransaction()
@@ -453,65 +491,69 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
                 .setPositiveButton(android.R.string.ok, null)
                 .show()
         }
-
-
         trans?.commitAllowingStateLoss()
-
-        Runnable{
-            actionBar?.apply {
-                val s = Point()
-
-                windowManager.defaultDisplay.getSize(s)
-                navigationMode = when(sp.getBoolean("tabmod", true)){
-                    false -> ActionBar.NAVIGATION_MODE_LIST
-                    true -> ActionBar.NAVIGATION_MODE_TABS
-                }
-                val landscape = (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
-                setDisplayShowTitleEnabled(landscape or (navigationMode == ActionBar.NAVIGATION_MODE_LIST))
-
-                setListNavigationCallbacks(ArrayAdapter(themedContext, android.R.layout.simple_list_item_1, stringList.map { getString(it) })){i,_->
-                    changePage(i)
-                    true
-                }
-
-                addTab(addTab(R.string.explore, R.drawable.explore, 0))
-                addTab(addTab(R.string.favcha, R.drawable.favcha, 1))
-                addTab(addTab(R.string.library, R.drawable.saved, 2))
-
-
-                Runnable{
-                    if (savedInstanceState != null) {
-                        try{
-                            setSelectedNavigationItem(savedInstanceState.getInt("page"))
-                        }catch (_: Exception){}
-                    }
-                }.also {
-                    Handler(mainLooper).postDelayed(it, 40L)
-                }
-
-            }
-        }.let {
-            Handler(mainLooper).postDelayed(it, 0)
-        }
 
         if(fragmentManager.backStackEntryCount != 0){
             hideAll()
         }
 
-
         myti()
-
-
+        showBackButton()
+        actionBar?.setHomeAsUpIndicator(R.drawable.menu)
         updateView()
 
         lockThem(savedInstanceState)
         if(isTv){
-            actionBar?.hide()
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+                onBackInvokedDispatcher.registerOnBackInvokedCallback(0){
+                    onBackPressed()
+                }
+            }
+        }
+
+        tryOn {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                dBack = object: OnBackAnimationCallback{
+                    override fun onBackInvoked() {
+                        toggleDrawer()
+                    }
+
+                    override fun onBackStarted(backEvent: BackEvent) {
+                        bin.drawer.animate().translationX((-bin.drawer.width/2).toFloat())
+                    }
+
+                    override fun onBackCancelled() {
+                        bin.drawer.animate().translationX(0F)
+                    }
+                }
+            }else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                dBack = OnBackInvokedCallback{
+                    toggleDrawer()
+                }
+            }
         }
         isNeedAdd(intent)
         fragmentManager.addOnBackStackChangedListener(this)
         roti.setActivity(this)
+        bin.listt.apply{
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_list_item_activated_1, stringList.map { getString(it) })
+            choiceMode = ListView.CHOICE_MODE_SINGLE
+            onItemClickListener = AdapterView.OnItemClickListener{_,_,i,_->
+                changePage(i)
+                toggleDrawer()
+            }
+            setSelection(savedInstanceState?.getInt("page")?:0)
+        }
 
+
+
+
+        bin.set.setOnClickListener {
+            startActivity(Intent(this, Settings::class.java))
+        }
+        bin.exit.setOnClickListener {
+            finish()
+        }
 
     }
 
@@ -618,6 +660,7 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
+        changePage(savedInstanceState?.getInt("page")?:0)
         runOnUiThread(fullRunner)
     }
 
@@ -703,7 +746,9 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
     }
 
     private fun updateView() {
-
+        if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            bin.drawer.layoutParams.width = windowManager.defaultDisplay.height
+        }
     }
 
 
@@ -726,6 +771,10 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
 //                MenuSheet(m).show()
 //            }
            window.openPanel(Window.FEATURE_OPTIONS_PANEL, KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MENU))
+        }
+        if(bin.drawer.visibility == View.VISIBLE){
+            toggleDrawer()
+            return
         }
         if(storeAm.isNotEmpty()){
             actionMode?.finish()
@@ -868,6 +917,43 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
 
     override fun onCreateDialog(id: Int, args: Bundle?): Dialog? {
         return when(id){
+            3234 -> AlertDialog.Builder(this, this.getThemeId()).setTitle(R.string.app_name).setSingleChoiceItems(
+                ArrayAdapter(this@MainActivity, android.R.layout.simple_list_item_activated_1, stringList.map { getString(it) }.toMutableList().also{
+                    it.add("Search other channel")
+                    it.add(getString(R.string.set))
+                }), openPage
+            ){d,i->
+                if(i == 3){
+                    SearchPeople().show(fragmentManager, "sp")
+                }
+                else if(i == 4){
+                    val b = Bundle()
+                    b.putBinder("lil", LilInstance())
+                    val s  = Intent(this, Settings::class.java).putExtra("bun",b)
+                    startActivity(s)
+                }else if (i < 3){
+                    changePage(i)
+                }
+                removeDialog(id)
+            }.setPositiveButton(android.R.string.cancel, null).setNeutralButton(R.string.exit){_,_->finish()}
+                .create().also {
+                it.window!!.also{w->
+                    w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+                    w.setDimAmount(0.2F)
+                    w.setGravity(Gravity.START)
+                    if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                        w.setLayout(windowManager.defaultDisplay.height, ViewGroup.LayoutParams.MATCH_PARENT)
+                    }
+                    else if((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) and isTablet){
+                        w.setLayout(windowManager.defaultDisplay.width/2, ViewGroup.LayoutParams.MATCH_PARENT)
+                    }
+                    else if((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) and !isTablet){
+                        w.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                        w.setGravity(Gravity.TOP)
+                    }
+                    w.setWindowAnimations(android.R.style.Animation_InputMethod)
+                }
+            }
             DIALOG_SEARCH -> {
                 SearchDetail(this, args?: Bundle()).apply {
                     setOnDismissListener {
@@ -976,22 +1062,22 @@ class MainActivity() : ActivityGroup(false), FragmentManager.OnBackStackChangedL
 
 
     fun mainPage(){
-        actionBar?.hideBackButton()
+//        actionBar?.hideBackButton()
         val s = Point()
 
         windowManager.defaultDisplay.getSize(s)
-        actionBar?.apply{
-            navigationMode = when (sp.getBoolean("tabmod", true)) {
-                false -> ActionBar.NAVIGATION_MODE_LIST
-                true -> ActionBar.NAVIGATION_MODE_TABS
-            }
-            actionBar?.setTitle(try{
-                (stringList[selectedNavigationIndex])
-            }catch (_: Exception){
-                (R.string.app_name)
-            })
-            setDisplayShowTitleEnabled(!(isTablet or (s.x >= s.y) or (navigationMode == ActionBar.NAVIGATION_MODE_LIST)))
-        }
+//        actionBar?.apply{
+//            navigationMode = when (sp.getBoolean("tabmod", true)) {
+//                false -> ActionBar.NAVIGATION_MODE_LIST
+//                true -> ActionBar.NAVIGATION_MODE_TABS
+//            }
+//            actionBar?.setTitle(try{
+//                (stringList[selectedNavigationIndex])
+//            }catch (_: Exception){
+//                (R.string.app_name)
+//            })
+//            setDisplayShowTitleEnabled(!(isTablet or (s.x >= s.y) or (navigationMode == ActionBar.NAVIGATION_MODE_LIST)))
+//        }
     }
 
 

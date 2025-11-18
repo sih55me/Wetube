@@ -1,8 +1,10 @@
 package app.wetube.page.dialog
 
+import android.animation.ValueAnimator
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.DialogInterface
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -10,17 +12,23 @@ import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.ActionMode
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.PopupMenu
 import android.widget.TextView
 import app.wetube.R
+import app.wetube.TranslucentHelper
 import app.wetube.core.FirstReview
+import app.wetube.core.isTablet
+import app.wetube.core.isTv
 import app.wetube.core.releaseParent
 import app.wetube.databinding.SearchAdvancedBinding
 import app.wetube.manage.db.FavChaDB
@@ -63,7 +71,22 @@ class SearchDetail(private val activity: Activity,private var arguments: Bundle 
     }
 
 
+    init {
+        val w = window!!
+        val resources = activity.resources
+        w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        w.setDimAmount(0.2F)
+        w.setGravity(Gravity.END)
+        if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            w.setLayout(activity.windowManager.defaultDisplay.height, ViewGroup.LayoutParams.MATCH_PARENT)
+        }
+        w.setWindowAnimations(android.R.style.Animation_InputMethod)
+    }
 
+
+
+    var isMaximizze = false
+    var isPinned = false
 
 
     val h get() = Handler(Looper.getMainLooper())
@@ -88,25 +111,22 @@ class SearchDetail(private val activity: Activity,private var arguments: Bundle 
         setContentView(v.root)
         setTitle("Request")
         v.openq.setOnClickListener {
-            v.query.showDropDown()
+            pyCom(HistoryDB::class.java)
         }
         v.openc.setOnClickListener {
-            v.channelId.showDropDown()
+            pyCom(FavChaDB::class.java)
         }
 
         super.onCreate(savedInstanceState)
         showBackButton()
         with(v.query) {
-            setAdapter(ArrayAdapter(context, android.R.layout.simple_list_item_1, hdb.listAsList().toMutableList()))
-
-            threshold = 1
+            if(context.isTv) {
+                imeOptions = EditorInfo.IME_ACTION_GO
+            }
         }
         with(v.channelId) {
-            val l = fdb.listAsList()
-            setAdapter(ArrayAdapter(context, android.R.layout.simple_list_item_1, l.map { it.title }.toMutableList()))
-            threshold = 1
-            onItemClickListener =  AdapterView.OnItemClickListener{_,_,position,_->
-                v.channelId.setText(l[position].id)
+            if(context.isTv) {
+                imeOptions = EditorInfo.IME_ACTION_GO
             }
         }
         v.cf.setOnClickListener {_->
@@ -115,6 +135,17 @@ class SearchDetail(private val activity: Activity,private var arguments: Bundle 
             v.query.text = null
         }
 
+        if(canBeNext){
+            v.npl.visibility = View.VISIBLE
+        }
+        v.np.setOnClickListener {
+            onQuery(v.query.text.toString(), v.channelId.text.toString(), o, true)
+            if(!isPinned){ dismiss() }
+        }
+        v.search.setOnClickListener {
+            onQuery(v.query.text.toString(), v.channelId.text.toString(), o, false)
+            if(!isPinned){ dismiss() }
+        }
         val onMenuClick = fun(t: TextView): MenuItem.OnMenuItemClickListener{
             return MenuItem.OnMenuItemClickListener{
                 t.onTextContextMenuItem(it.itemId)
@@ -137,6 +168,7 @@ class SearchDetail(private val activity: Activity,private var arguments: Bundle 
                 0
             }
         )
+
 
         v.order.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
             override fun onItemSelected(
@@ -166,20 +198,49 @@ class SearchDetail(private val activity: Activity,private var arguments: Bundle 
 
     }
 
+    val n = TranslucentHelper(window!!, context)
+
+
+    override fun dismiss() {
+        activity.window.decorView.setPadding(0,0,0,0)
+        super.dismiss()
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menu.add(0, DialogInterface.BUTTON_POSITIVE,0,android.R.string.search_go).setOnMenuItemClickListener {
-            onQuery(v.query.text.toString(), v.channelId.text.toString(), o, false)
-            dismiss()
-            true
-        }.setIcon(R.drawable.send).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        if(canBeNext){
-            menu.add(0, DialogInterface.BUTTON_NEUTRAL,1,"Next page").setOnMenuItemClickListener {
-                onQuery(v.query.text.toString(), v.channelId.text.toString(), o, true)
-                dismiss()
+        if(activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE){
+            menu.add(0, 0, 0, "Pin").setOnMenuItemClickListener {
+                isPinned = !isPinned
+                if(!isPinned){
+                    window!!.setDimAmount(0.2F)
+                    activity.window.decorView.setPadding(0,0,0,0)
+                    window!!.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                }else{
+                    window!!.setDimAmount(0F)
+                    window!!.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                    if(winAttr!!.x < 0) {
+                        activity.window.decorView.setPadding(activity.windowManager.defaultDisplay.height - n.navigationBarHeight, 0, 0, 0)
+                    }else{
+                        activity.window.decorView.setPadding(0,0,activity.windowManager.defaultDisplay.height, 0)
+                    }
+                }
+                windowManager.updateViewLayout(window!!.decorView, winAttr)
                 true
-            }
+            }.setIcon(R.drawable.pin).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+
+            menu.add(0, 0, 0, R.string.fullscreen).setOnMenuItemClickListener {
+                isMaximizze = !isMaximizze
+                if (isMaximizze) {
+                    it.setIcon(R.drawable.restore_full)
+                    animateWidth(activity.windowManager.defaultDisplay.height,activity.windowManager.defaultDisplay.width+ n.navigationBarHeight)
+                } else {
+                    it.setIcon(R.drawable.maximize)
+                    animateWidth(activity.windowManager.defaultDisplay.width + n.navigationBarHeight, activity.windowManager.defaultDisplay.height)
+                }
+                windowManager.updateViewLayout(window!!.decorView, winAttr)
+                true
+            }.setIcon(R.drawable.maximize).setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         }
-        return super.onCreateOptionsMenu(menu)
+        return true
     }
 
 
@@ -190,6 +251,23 @@ class SearchDetail(private val activity: Activity,private var arguments: Bundle 
             dismiss()
         }
         return super.onOptionsItemSelected(item)
+    }
+
+
+
+    fun animateWidth(s:Int, e:Int){
+        val animator = ValueAnimator.ofInt(s, e);
+        animator.setDuration(200);
+        animator.addUpdateListener { animation ->
+            val animatedValue = animation.getAnimatedValue();
+            if (animatedValue is Int) {
+                window!!.setLayout(
+                    animatedValue,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+        };
+        animator.start();
     }
 
 
